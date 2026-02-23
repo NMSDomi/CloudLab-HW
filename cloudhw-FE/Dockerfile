@@ -11,5 +11,5 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /usr/src/app/dist/cloudhw-fe/browser /usr/share/nginx/html
 COPY --from=build /usr/src/app/src/assets/env.sample.js /usr/share/nginx/html/assets/env.sample.js
 
-EXPOSE 80
+EXPOSE 8080
 CMD ["/bin/sh", "-c", "envsubst < /usr/share/nginx/html/assets/env.sample.js > /usr/share/nginx/html/assets/env.js && exec nginx -g 'daemon off;'"]

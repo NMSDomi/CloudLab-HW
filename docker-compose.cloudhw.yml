@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "82:80"
+      - "82:8080"
     networks: 
       - cloudhw-network
     environment:
