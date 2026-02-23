@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write       gcloud app create --region=europe-west3 --project=<your-project-id>
+      packages: write
 
     outputs:
       be-gcr-image: ${{ steps.meta-be.outputs.gcr-image }}
