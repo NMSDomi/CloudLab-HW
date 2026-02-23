@@ -109,6 +109,19 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      # ── Frontend –───────────
+      - name: Render FE app.yaml
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: envsubst < cloudhw-FE/app.yaml > cloudhw-FE/app.rendered.yaml
+
+      - name: Deploy FE to App Engine
+        run: |
+          gcloud app deploy cloudhw-FE/app.rendered.yaml \
+            --image-url=${{ env.GCR_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/cloudhw-fe:${{ env.IMAGE_TAG }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --quiet
+
       # ── Backend –────────────
       - name: Render BE app.yaml
         env:
@@ -129,18 +142,5 @@ jobs:
         run: |
           gcloud app deploy cloudhw-BE/app.rendered.yaml \
             --image-url=${{ env.GCR_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/cloudhw-be:${{ env.IMAGE_TAG }} \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --quiet
-
-      # ── Frontend –───────────
-      - name: Render FE app.yaml
-        env:
-          BACKEND_URL: ${{ secrets.BACKEND_URL }}
-        run: envsubst < cloudhw-FE/app.yaml > cloudhw-FE/app.rendered.yaml
-
-      - name: Deploy FE to App Engine
-        run: |
-          gcloud app deploy cloudhw-FE/app.rendered.yaml \
-            --image-url=${{ env.GCR_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/cloudhw-fe:${{ env.IMAGE_TAG }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
