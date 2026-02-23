@@ -2,6 +2,9 @@ runtime: custom
 env: flex
 service: api
 
+beta_settings:
+  cloud_sql_instances: ${GCP_CLOUDSQL_CONNECTION_NAME}
+
 resources:
   cpu: 1
   memory_gb: 0.5
