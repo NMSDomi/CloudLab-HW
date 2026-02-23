@@ -1,0 +1,73 @@
+name: cloudhw-release
+services:
+  cloudhw-be: 
+    container_name: cloudhw-be
+    build:
+      context: cloudhw-BE
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      POSTGRES_HOST: cloudhw-db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: cloudhw-db
+      JWT_ISSUER: "Cloud HW"
+      JWT_AUDIANCE: "Cloud HW User"
+      JWT_KEY: "SHFzdnmcgd648°^šdcaa##y<UIHDpfgkmvzdf792kaskdjmvkahflélogpőádehatz"
+      ADMIN_EMAIL: "cloudhw@cloudhw.com"
+      ADMIN_PASSWORD: "Admin123"
+      ADMIN_NAME: "cloudhw-admin"
+    networks: 
+      - cloudhw-network
+
+  cloudhw-fe:
+    container_name: cloudhw-fe
+    build:
+      context: cloudhw-FE
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "82:80"
+    networks: 
+      - cloudhw-network
+    environment:
+      - BACKEND_URL=http://localhost:8081/
+
+  cloudhw-db:
+    image: postgres
+    container_name: cloudhw-db
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+    volumes:
+      - cloudhw-db-data:/var/lib/postgresql/data
+    networks: 
+      - cloudhw-network
+
+  cloudhw-pgadmin:
+    image: dpage/pgadmin4
+    container_name: cloudhw-pgadmin
+    restart: always
+    ports:
+      - "5055:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cloudhw.com
+      PGADMIN_DEFAULT_PASSWORD: strong very strong
+    volumes:
+      - cloudhw-pgadmin-data:/var/lib/pgadmin
+    networks:
+      - cloudhw-network
+
+volumes:
+  cloudhw-db-data:
+  cloudhw-pgadmin-data:
+
+networks:
+  cloudhw-network:
+    driver: bridge

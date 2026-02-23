@@ -1,0 +1,36 @@
+services:
+  cloudhw-db:
+    image: postgres
+    container_name: cloudhw-db
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+    volumes:
+      - cloudhw-db-data:/var/lib/postgresql/data
+    networks: 
+      - cloudhw-network
+
+  cloudhw-pgadmin:
+    image: dpage/pgadmin4
+    container_name: cloudhw-pgadmin
+    restart: always
+    ports:
+      - "5055:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cloudhw.com
+      PGADMIN_DEFAULT_PASSWORD: strong very strong
+    volumes:
+      - cloudhw-pgadmin-data:/var/lib/pgadmin
+    networks:
+      - cloudhw-network
+
+volumes:
+  cloudhw-db-data:
+  cloudhw-pgadmin-data:
+
+networks:
+  cloudhw-network:
+    driver: bridge

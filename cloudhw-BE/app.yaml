@@ -1,0 +1,28 @@
+runtime: custom
+env: flex
+service: api
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 3
+
+env_variables:
+  POSTGRES_HOST: "${POSTGRES_HOST}"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "${POSTGRES_USER}"
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+  POSTGRES_DB: "${POSTGRES_DB}"
+  JWT_ISSUER: "${JWT_ISSUER}"
+  JWT_AUDIANCE: "${JWT_AUDIANCE}"
+  JWT_KEY: "${JWT_KEY}"
+  ADMIN_EMAIL: "${ADMIN_EMAIL}"
+  ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+  ADMIN_NAME: "${ADMIN_NAME}"
+
+beta_settings:
+  cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"

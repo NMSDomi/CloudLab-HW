@@ -1,0 +1,15 @@
+runtime: custom
+env: flex
+service: default
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
+  disk_size_gb: 10
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 3
+
+env_variables:
+  BACKEND_URL: "${BACKEND_URL}"
