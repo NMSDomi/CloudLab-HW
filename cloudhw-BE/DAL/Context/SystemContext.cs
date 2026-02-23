@@ -118,6 +118,6 @@ public class SystemContext : ISystemContext
 
     public string GetConnectionString()
     {
-        return "Host=" + POSTGRES_HOST + ":" + POSTGRES_PORT + ";Username=" + POSTGRES_USER + ";Password=" + POSTGRES_PASSWORD + ";Database=" + POSTGRES_DB + ";Include Error Detail= true";
+        return "Host=" + POSTGRES_HOST + ";Port=" + POSTGRES_PORT + ";Username=" + POSTGRES_USER + ";Password=" + POSTGRES_PASSWORD + ";Database=" + POSTGRES_DB + ";Include Error Detail=true";
     }
 }
