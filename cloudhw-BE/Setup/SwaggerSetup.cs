@@ -41,9 +41,11 @@ namespace Backend.Setup
         {
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
         private static string SchemaIdStrategy(Type currentClass)
