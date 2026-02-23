@@ -3,7 +3,7 @@ env: flex
 service: api
 
 beta_settings:
-  cloud_sql_instances: ${GCP_CLOUDSQL_CONNECTION_NAME}
+  cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
 
 resources:
   cpu: 1
@@ -26,6 +26,3 @@ env_variables:
   ADMIN_EMAIL: "${ADMIN_EMAIL}"
   ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
   ADMIN_NAME: "${ADMIN_NAME}"
-
-beta_settings:
-  cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
