@@ -27,6 +27,3 @@ env_variables:
   ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
   ADMIN_NAME: "${ADMIN_NAME}"
   FRONTEND_URL: "${FRONTEND_URL}"
-
-beta_settings:
-  cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
