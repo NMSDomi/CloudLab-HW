@@ -11,15 +11,24 @@ public static class CorsSetup
             options.AddPolicy(name: CorsPolicy,
                 policy =>
                 {
-                    policy.WithOrigins
-                            (
-                             "http://localhost:4200",
-                             "https://localhost:4200",
-                             "http://localhost:4400",
-                             "https://localhost:4400",
-                             "http://localhost:82",
-                             "https://localhost:82"
-                            )
+                    var allowedOrigins = new List<string>
+                    {
+                        "http://localhost:4200",
+                        "https://localhost:4200",
+                        "http://localhost:4400",
+                        "https://localhost:4400",
+                        "http://localhost:82",
+                        "https://localhost:82"
+                    };
+
+                    // Add production frontend URL from environment variable
+                    var frontendUrl = builder.Configuration["FRONTEND_URL"];
+                    if (!string.IsNullOrWhiteSpace(frontendUrl))
+                    {
+                        allowedOrigins.Add(frontendUrl);
+                    }
+
+                    policy.WithOrigins(allowedOrigins.ToArray())
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();

@@ -122,6 +122,7 @@ jobs:
           ADMIN_EMAIL:                ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD:             ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_NAME:                 ${{ secrets.ADMIN_NAME }}
+          FRONTEND_URL:               ${{ secrets.FRONTEND_URL }}
           GCP_CLOUDSQL_CONNECTION_NAME: ${{ secrets.GCP_CLOUDSQL_CONNECTION_NAME }}
         run: envsubst < cloudhw-BE/app.yaml > cloudhw-BE/app.rendered.yaml
 

@@ -20,6 +20,7 @@ services:
       ADMIN_EMAIL: "cloudhw@cloudhw.com"
       ADMIN_PASSWORD: "Admin123"
       ADMIN_NAME: "cloudhw-admin"
+      FRONTEND_URL: "http://localhost:82"
     networks: 
       - cloudhw-network
 
