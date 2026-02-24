@@ -100,6 +100,12 @@ export class UserService {
         );
     }
 
+    getUserById(id: string) {
+        return this.http.get<any>(`${environmentUrls.users}/${encodeURIComponent(id)}`).pipe(
+            map(u => this.mapBackendUserToModel(u))
+        );
+    }
+
     deleteUser(id: string) {
         return this.http.delete(`${environmentUrls.users}/${encodeURIComponent(id)}`);
     }

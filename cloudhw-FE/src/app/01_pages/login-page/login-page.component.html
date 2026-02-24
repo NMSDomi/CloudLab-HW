@@ -1,3 +1,103 @@
-<p>
-  login-page works!
-</p>
+<div class="login-container">
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="login-logo__icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+        </svg>
+      </div>
+      <h1 class="login-logo__title">CloudLab</h1>
+    </div>
+
+    <!-- Toggle tabs -->
+    <div class="login-tabs">
+      <button class="login-tab" [class.active]="!isRegister" (click)="isRegister = false">Sign In</button>
+      <button class="login-tab" [class.active]="isRegister" (click)="isRegister = true">Register</button>
+    </div>
+
+    <!-- Error message -->
+    @if (errorMessage) {
+      <div class="login-error">{{ errorMessage }}</div>
+    }
+
+    <!-- Login Form -->
+    @if (!isRegister) {
+      <form class="login-form" (ngSubmit)="onLogin()">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="you@example.com"
+            [(ngModel)]="loginEmail"
+            name="loginEmail"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="••••••••"
+            [(ngModel)]="loginPassword"
+            name="loginPassword"
+            required
+          />
+        </div>
+        <button class="btn-submit" type="submit" [disabled]="loading">
+          @if (loading) {
+            <span class="spinner"></span>
+          }
+          Sign In
+        </button>
+      </form>
+    }
+
+    <!-- Register Form -->
+    @if (isRegister) {
+      <form class="login-form" (ngSubmit)="onRegister()">
+        <div class="form-group">
+          <label for="regName">Full Name</label>
+          <input
+            id="regName"
+            type="text"
+            placeholder="John Doe"
+            [(ngModel)]="registerName"
+            name="registerName"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <input
+            id="regEmail"
+            type="email"
+            placeholder="you@example.com"
+            [(ngModel)]="registerEmail"
+            name="registerEmail"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input
+            id="regPassword"
+            type="password"
+            placeholder="••••••••"
+            [(ngModel)]="registerPassword"
+            name="registerPassword"
+            required
+          />
+        </div>
+        <button class="btn-submit" type="submit" [disabled]="loading">
+          @if (loading) {
+            <span class="spinner"></span>
+          }
+          Create Account
+        </button>
+      </form>
+    }
+  </div>
+</div>

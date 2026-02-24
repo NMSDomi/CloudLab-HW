@@ -13,6 +13,8 @@ public static class CorsSetup
                 {
                     policy.WithOrigins
                             (
+                             "http://localhost:4200",
+                             "https://localhost:4200",
                              "http://localhost:4400",
                              "https://localhost:4400",
                              "http://localhost:82",
