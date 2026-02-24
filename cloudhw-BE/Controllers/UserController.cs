@@ -97,6 +97,24 @@ public class UserController(
         return Ok(usersWithRoles);
     }
 
+    [HttpGet("{id}")]
+    [Authorize]
+    public async Task<IActionResult> GetUserById(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return Ok(new
+        {
+            user.Id,
+            user.Email,
+            user.Name,
+            user.UserName,
+            Roles = roles.FirstOrDefault()
+        });
+    }
+
 
     [HttpGet("me")]
     [Authorize]
@@ -139,27 +157,9 @@ public class UserController(
     }
 
     [HttpPost("register")]
-    [Authorize(Roles = $"{RoleNames.Admin}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] DAL.Models.RegisterRequest model)
     {
-        var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
-
-        var requestedRole = string.IsNullOrWhiteSpace(model.Role)
-            ? RoleNames.Editor
-            : model.Role;
-
-        if (requestedRole.ToLower() != RoleNames.Editor.ToLower() &&
-            requestedRole.ToLower() != RoleNames.Admin.ToLower())
-        {
-            return BadRequest("Érvénytelen szerepkör. Csak Editor vagy Admin szerepkör engedélyezett.");
-        }
-
-        if (requestedRole?.ToLower() == RoleNames.Admin.ToLower() && currentUserRole?.ToLower() != RoleNames.Admin.ToLower())
-        {
-            return Forbid("Csak Admin hozhat létre új Admin szerepkörű felhasználót.");
-        }
-
-
         var user = new User
         {
             UserName = model.Email,
@@ -172,7 +172,7 @@ public class UserController(
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        await _userManager.AddToRoleAsync(user, requestedRole);
+        await _userManager.AddToRoleAsync(user, RoleNames.Editor);
 
         return Ok(new { message = "Sikeres regisztráció.", user.Email });
     }

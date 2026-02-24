@@ -1,0 +1,58 @@
+<header class="header">
+  <!-- Left: Brand -->
+  <div class="header__brand" [routerLink]="['/']">
+    <div class="header__logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+      </svg>
+    </div>
+    <span class="header__brand-name">PikVjú</span>
+  </div>
+
+  <!-- Right: actions + user -->
+  <div class="header__actions">
+    <!-- Upload button -->
+    <button class="btn btn--upload" (click)="onUpload()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
+      </svg>
+      <span>Upload</span>
+    </button>
+
+    <!-- User section -->
+    <ng-container *ngIf="currentUser(); else loginBtn">
+      <div class="header__user" (mouseenter)="dropdownOpen = true" (mouseleave)="dropdownOpen = false">
+        <div class="header__avatar" [title]="currentUser()!.name" [routerLink]="['/profile', currentUser()!.id]">
+          {{ userInitials() }}
+        </div>
+        <span class="header__user-name" [routerLink]="['/profile', currentUser()!.id]">{{ currentUser()!.name }}</span>
+
+        <!-- Logout icon -->
+        <button class="header__logout-icon" (click)="onLogout()" title="Sign out">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+          </svg>
+        </button>
+
+        <!-- Dropdown -->
+        <!-- <div class="header__dropdown" *ngIf="dropdownOpen">
+          <a class="header__dropdown-item" routerLink="/albums">
+            <span>Albums</span>
+          </a>
+          <a class="header__dropdown-item" [routerLink]="['/profile', currentUser()!.id]">
+            <span>Profile</span>
+          </a>
+        </div>           -->
+      </div>
+    </ng-container>
+
+    <ng-template #loginBtn>
+      <button class="btn btn--login" (click)="onLogin()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+        </svg>
+        <span>Login</span>
+      </button>
+    </ng-template>
+  </div>
+</header>
