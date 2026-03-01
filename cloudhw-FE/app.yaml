@@ -1,6 +1,8 @@
-runtime: custom
+runtime: nodejs22
 env: flex
 service: default
+
+entrypoint: node server.js
 
 resources:
   cpu: 1
