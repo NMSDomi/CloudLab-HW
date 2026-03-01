@@ -16,8 +16,13 @@ builder.SetupCors();
 
 var app = builder.Build();
 
-await app.ApplyMigrationsAsync();
-await app.UseRoleSeedAsync();
+// Run migrations in background so the HTTP server starts immediately
+// and App Engine Flex health checks can pass without timing out
+_ = Task.Run(async () =>
+{
+    await app.ApplyMigrationsAsync();
+    await app.UseRoleSeedAsync();
+});
 
 app.ConfigureSwagger();
 app.ConfigureCors();
