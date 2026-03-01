@@ -129,7 +129,6 @@ jobs:
       - name: Deploy FE to App Engine
         run: |
           gcloud app deploy cloudhw-FE/app.rendered.yaml \
-            --image-url=${{ env.GCR_REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/cloudhw-fe:${{ env.IMAGE_TAG }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
 
