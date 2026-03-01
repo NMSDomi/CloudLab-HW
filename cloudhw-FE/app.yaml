@@ -3,7 +3,7 @@ env: flex
 service: default
 
 runtime_config:
-  operating_system: "ubuntu24"
+  operating_system: "ubuntu22"
   runtime_version: "22"
 
 resources:
