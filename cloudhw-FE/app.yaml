@@ -1,8 +1,10 @@
-runtime: nodejs22
+runtime: nodejs
 env: flex
 service: default
 
-entrypoint: node server.js
+runtime_config:
+  operating_system: "ubuntu24"
+  runtime_version: "22"
 
 resources:
   cpu: 1
