@@ -1,4 +1,4 @@
-runtime: nodejs20
+runtime: nodejs22
 
 handlers:
 - url: /(.*\.(js|css|png|jpg|svg|ico|woff|woff2|ttf|eot))$
