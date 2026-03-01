@@ -121,6 +121,17 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       # ── Frontend –───────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Angular App
+        run: |
+          cd cloudhw-FE
+          npm ci
+          npm run build
+
       - name: Render FE app.yaml
         env:
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
