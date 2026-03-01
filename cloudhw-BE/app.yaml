@@ -2,6 +2,10 @@ runtime: aspnetcore
 env: flex
 service: api
 
+runtime_config:
+  operating_system: "ubuntu22"
+  runtime_version: "8"
+
 beta_settings:
   cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
 
