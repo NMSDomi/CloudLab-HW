@@ -11,13 +11,6 @@
 
   <!-- Right: actions + user -->
   <div class="header__actions">
-    <!-- Upload button -->
-    <button class="btn btn--upload" (click)="onUpload()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-      </svg>
-      <span>Upload</span>
-    </button>
 
     <!-- User section -->
     <ng-container *ngIf="currentUser(); else loginBtn">

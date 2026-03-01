@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using cloudhw_BE.DAL.Context;
@@ -11,9 +12,11 @@ using cloudhw_BE.DAL.Context;
 namespace cloudhw_BE.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260225104612_Model_structure")]
+    partial class Model_structure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -154,6 +157,108 @@ namespace cloudhw_BE.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.Album", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CoverPictureId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoverPictureId")
+                        .IsUnique();
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Albums");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.AlbumShare", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("AlbumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SharedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "AlbumId");
+
+                    b.HasIndex("AlbumId");
+
+                    b.ToTable("AlbumShares");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.Picture", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AlbumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("timestamp(0) with time zone");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte[]>("Thumbnail")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlbumId");
+
+                    b.ToTable("Pictures");
+                });
+
             modelBuilder.Entity("cloudhw_BE.DAL.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -277,6 +382,68 @@ namespace cloudhw_BE.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.Album", b =>
+                {
+                    b.HasOne("cloudhw_BE.DAL.Models.Picture", "CoverPicture")
+                        .WithOne()
+                        .HasForeignKey("cloudhw_BE.DAL.Models.Album", "CoverPictureId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("cloudhw_BE.DAL.Models.User", "Owner")
+                        .WithMany("Albums")
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoverPicture");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.AlbumShare", b =>
+                {
+                    b.HasOne("cloudhw_BE.DAL.Models.Album", "Album")
+                        .WithMany("SharedWith")
+                        .HasForeignKey("AlbumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("cloudhw_BE.DAL.Models.User", "User")
+                        .WithMany("SharedAlbums")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Album");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.Picture", b =>
+                {
+                    b.HasOne("cloudhw_BE.DAL.Models.Album", "Album")
+                        .WithMany("Pictures")
+                        .HasForeignKey("AlbumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Album");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.Album", b =>
+                {
+                    b.Navigation("Pictures");
+
+                    b.Navigation("SharedWith");
+                });
+
+            modelBuilder.Entity("cloudhw_BE.DAL.Models.User", b =>
+                {
+                    b.Navigation("Albums");
+
+                    b.Navigation("SharedAlbums");
                 });
 #pragma warning restore 612, 618
         }

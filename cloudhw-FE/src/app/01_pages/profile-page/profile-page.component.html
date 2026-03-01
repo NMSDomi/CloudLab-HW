@@ -34,12 +34,84 @@
         <div class="msg msg--error">{{ errorMessage() }}</div>
       }
 
-      <!-- OWN PROFILE VIEW -->
-      @if (isOwnProfile()) {
-        <!-- read-only info already shown in header -->
-      } @else {
-        <!-- OTHER USER VIEW (read-only, info already in header) -->
-      }
+      <!-- Albums Section -->
+      <div class="albums-section">
+        <h2 class="albums-title">
+          @if (isOwnProfile()) {
+            My Albums
+          } @else {
+            Public Albums
+          }
+        </h2>
+
+        @if (albumsLoading()) {
+          <div class="albums-loading">
+            <div class="spinner"></div>
+            <span>Loading albums...</span>
+          </div>
+        } @else if (!isOwnProfile() && albums().length === 0) {
+          <p class="albums-empty">No albums yet.</p>
+        } @else {
+          <div class="albums-grid">
+            @if (isOwnProfile()) {
+              <div class="album-card album-card--create" (click)="createAlbum()">
+                <div class="album-cover album-cover--create">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </div>
+                <div class="album-info">
+                  <h3 class="album-name">New Album</h3>
+                  <div class="album-meta">
+                    <span>Create a new album</span>
+                  </div>
+                </div>
+              </div>
+            }
+            @for (album of albums(); track album.id) {
+              <div class="album-card" [class.album-card--uploading]="uploadService.isUploading(album.id)" (click)="navigateToAlbum(album)">
+                <div class="album-cover">
+                  @if (getCoverUrl(album)) {
+                    <img [src]="getCoverUrl(album)" alt="{{ album.name }}" [title]="album.name" />
+                  } @else {
+                    <div class="album-cover-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-5-5L5 21" />
+                      </svg>
+                    </div>
+                  }
+                  @if (uploadService.isUploading(album.id)) {
+                    <div class="album-upload-overlay">
+                      <div class="album-upload-spinner"></div>
+                      <span class="album-upload-percent">{{ uploadService.getUploadPercent(album.id) }}%</span>
+                    </div>
+                  } @else if (album.isPublic) {
+                    <span class="album-badge album-badge--public">Public</span>
+                  } @else {
+                    <span class="album-badge album-badge--private">Private</span>
+                  }
+                  @if (isOwnProfile() && !uploadService.isUploading(album.id)) {
+                    <button class="album-delete-btn" title="Delete album" (click)="deleteAlbum(album, $event)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  }
+                </div>
+                <div class="album-info">
+                  <h3 class="album-name">{{ album.name }}</h3>
+                  <div class="album-meta">
+                    <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                    <span class="album-meta-dot">&middot;</span>
+                    <span>{{ formatSize(album.size) }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   }
 </div>
@@ -102,6 +174,113 @@
           <button class="btn btn--secondary" type="button" (click)="toggleChangePassword()">Cancel</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- Create Album Modal -->
+@if (creatingAlbum()) {
+  <div class="modal-overlay" (click)="cancelCreateAlbum()">
+    <div class="modal-card modal-card--wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Create Album</h2>
+        <button class="modal-close" (click)="cancelCreateAlbum()" [disabled]="albumCreating()">&times;</button>
+      </div>
+      @if (errorMessage()) {
+        <div class="msg msg--error">{{ errorMessage() }}</div>
+      }
+      <div class="modal-body modal-body--scroll">
+        <!-- Album info fields -->
+        <div class="form-group">
+          <label for="albumName">Album Name</label>
+          <input id="albumName" type="text" [(ngModel)]="newAlbumName" name="albumName"
+                 placeholder="My Vacation Photos" required [disabled]="albumCreating()" />
+        </div>
+        <div class="form-group">
+          <label for="albumDesc">Description</label>
+          <textarea id="albumDesc" [(ngModel)]="newAlbumDescription" name="albumDesc"
+                    placeholder="Optional description..." rows="2" [disabled]="albumCreating()"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="toggle-label">
+            <span class="toggle-text">Public album</span>
+            <div class="toggle-switch" [class.toggle-switch--on]="newAlbumIsPublic" (click)="newAlbumIsPublic = !newAlbumIsPublic">
+              <div class="toggle-knob"></div>
+            </div>
+          </label>
+        </div>
+
+        <!-- File drop zone -->
+        <div class="form-group">
+          <label>Pictures</label>
+          <div class="drop-zone" [class.drop-zone--active]="dragOver()"
+               (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
+               (click)="fileInput.click()">
+            <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="drop-zone-icon">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span class="drop-zone-text">Drop images here or click to browse</span>
+            <span class="drop-zone-hint">Supports JPG, PNG, WebP, GIF</span>
+          </div>
+        </div>
+
+        <!-- Selected files preview -->
+        @if (selectedFiles().length > 0) {
+          <div class="selected-files">
+            <div class="selected-files-header">
+              <span>{{ selectedFiles().length }} file{{ selectedFiles().length === 1 ? '' : 's' }} selected</span>
+              <button class="btn-link" (click)="selectedFiles.set([])">Clear all</button>
+            </div>
+            <div class="selected-files-grid">
+              @for (sf of selectedFiles(); track sf.preview; let i = $index) {
+                <div class="file-preview" [class.file-preview--cover]="coverIndex() === i" (click)="selectCover(i)">
+                  <img [src]="sf.preview" alt="{{ sf.name }}" [title]="sf.name" />
+                  @if (coverIndex() === i) {
+                    <span class="file-cover-badge">Cover</span>
+                  }
+                  <button class="file-preview-remove" (click)="removeFile(i); $event.stopPropagation()" [disabled]="albumCreating()">&times;</button>
+                  <div class="file-preview-info">
+                    <span class="file-preview-name">{{ sf.name }}</span>
+                    <span class="file-preview-size">{{ formatFileSize(sf.size) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn--primary" (click)="submitCreateAlbum()" [disabled]="albumCreating() || !newAlbumName.trim()">
+          @if (albumCreating()) {
+            <span class="spinner spinner--sm"></span>
+            Creating...
+          } @else {
+            Create Album
+          }
+        </button>
+        <button class="btn btn--secondary" (click)="cancelCreateAlbum()" [disabled]="albumCreating()">Cancel</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Album Confirmation Modal -->
+@if (deletingAlbum(); as album) {
+  <div class="modal-overlay" (click)="cancelDeleteAlbum()">
+    <div class="modal-card modal-card--delete" (click)="$event.stopPropagation()">
+      <div class="delete-modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </div>
+      <h2 class="delete-modal-title">Delete Album</h2>
+      <p class="delete-modal-text">Are you sure you want to delete <strong>"{{ album.name }}"</strong>? This will permanently remove all {{ album.pictureCount }} photo{{ album.pictureCount === 1 ? '' : 's' }}.</p>
+      <div class="modal-actions">
+        <button class="btn btn--danger" (click)="confirmDeleteAlbum()">Delete</button>
+        <button class="btn btn--secondary" (click)="cancelDeleteAlbum()">Cancel</button>
+      </div>
     </div>
   </div>
 }
