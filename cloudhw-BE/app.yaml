@@ -38,6 +38,3 @@ env_variables:
   SMTP_USER: "${SMTP_USER}"
   SMTP_PASSWORD: "${SMTP_PASSWORD}"
   SMTP_FROM: "${SMTP_FROM}"
-
-beta_settings:
-  cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
