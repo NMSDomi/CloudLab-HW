@@ -15,11 +15,17 @@ public static class AuthSetup
         //Authentications
         builder.Services.AddIdentity<User, IdentityRole>(options =>
         {
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequiredLength = 6;
+            // Password complexity
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequiredLength = 8;
+
+            // Account lockout after failed attempts
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.AllowedForNewUsers = true;
         })
             .AddRoles<IdentityRole>()
             .AddTokenProvider<DataProtectorTokenProvider<User>>("cloudhwBackendApi")
@@ -28,8 +34,14 @@ public static class AuthSetup
 
         builder.Services.Configure<IdentityOptions>(options =>
         {
-            options.SignIn.RequireConfirmedEmail = false;
+            options.SignIn.RequireConfirmedEmail = true;
             options.User.RequireUniqueEmail = true;
+        });
+
+        // Password reset / email confirmation tokens expire after 1 hour
+        builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+        {
+            options.TokenLifespan = TimeSpan.FromMinutes(5);
         });
 
         

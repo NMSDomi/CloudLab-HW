@@ -1,29 +1,36 @@
-<div class="login-container">
-  <div class="login-card">
+<div class="auth-container">
+  <div class="auth-card">
     <!-- Logo -->
-    <div class="login-logo">
-      <div class="login-logo__icon">
+    <div class="auth-logo">
+      <div class="auth-logo__icon">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
         </svg>
       </div>
-      <h1 class="login-logo__title">PikVjú</h1>
+      <h1 class="auth-logo__title">PikVjú</h1>
     </div>
 
     <!-- Toggle tabs -->
-    <div class="login-tabs">
-      <button class="login-tab" [class.active]="!isRegister" (click)="isRegister = false">Sign In</button>
-      <button class="login-tab" [class.active]="isRegister" (click)="isRegister = true">Register</button>
-    </div>
+    @if (view !== 'forgot') {
+      <div class="login-tabs">
+        <button class="login-tab" [class.active]="view === 'login'" (click)="switchView('login')">Sign In</button>
+        <button class="login-tab" [class.active]="view === 'register'" (click)="switchView('register')">Register</button>
+      </div>
+    }
+
+    <!-- Success message -->
+    @if (successMessage) {
+      <div class="auth-success">{{ successMessage }}</div>
+    }
 
     <!-- Error message -->
     @if (errorMessage) {
-      <div class="login-error">{{ errorMessage }}</div>
+      <div class="auth-error">{{ errorMessage }}</div>
     }
 
     <!-- Login Form -->
-    @if (!isRegister) {
-      <form class="login-form" (ngSubmit)="onLogin()">
+    @if (view === 'login') {
+      <form class="auth-form" (ngSubmit)="onLogin()">
         <div class="form-group">
           <label for="loginEmail">Email</label>
           <input
@@ -52,12 +59,20 @@
           }
           Sign In
         </button>
+        <div class="login-form__footer">
+          <label class="remember-me">
+            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="remember-me__input" />
+            <span class="remember-me__toggle"></span>
+            <span class="remember-me__label">Stay logged in for 30 days</span>
+          </label>
+          <button type="button" class="link-btn" (click)="switchView('forgot')">Elfelejtett jelszó?</button>
+        </div>
       </form>
     }
 
     <!-- Register Form -->
-    @if (isRegister) {
-      <form class="login-form" (ngSubmit)="onRegister()">
+    @if (view === 'register') {
+      <form class="auth-form" (ngSubmit)="onRegister()">
         <div class="form-group">
           <label for="regName">Full Name</label>
           <input
@@ -90,13 +105,40 @@
             name="registerPassword"
             required
           />
+          <app-password-strength [password]="registerPassword" (valid)="registerPasswordValid = $event"></app-password-strength>
         </div>
-        <button class="btn-submit" type="submit" [disabled]="loading">
+        <button class="btn-submit" type="submit" [disabled]="loading || !isRegisterFormValid">
           @if (loading) {
             <span class="spinner"></span>
           }
           Create Account
         </button>
+      </form>
+    }
+
+    <!-- Forgot Password Form -->
+    @if (view === 'forgot') {
+      <h2 class="form-heading">Jelszó visszaállítás</h2>
+      <p class="form-subtext">Add meg az email címedet és küldünk egy visszaállító linket.</p>
+      <form class="auth-form" (ngSubmit)="onForgotPassword()">
+        <div class="form-group">
+          <label for="forgotEmail">Email</label>
+          <input
+            id="forgotEmail"
+            type="email"
+            placeholder="you@example.com"
+            [(ngModel)]="forgotEmail"
+            name="forgotEmail"
+            required
+          />
+        </div>
+        <button class="btn-submit" type="submit" [disabled]="loading">
+          @if (loading) {
+            <span class="spinner"></span>
+          }
+          Link küldése
+        </button>
+        <button type="button" class="link-btn center" (click)="switchView('login')">← Vissza a bejelentkezéshez</button>
       </form>
     }
   </div>

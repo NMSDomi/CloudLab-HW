@@ -6,8 +6,8 @@ services:
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - cloudhw-db-data:/var/lib/postgresql/data
     networks: 
@@ -20,8 +20,8 @@ services:
     ports:
       - "5055:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@cloudhw.com
-      PGADMIN_DEFAULT_PASSWORD: strong very strong
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     volumes:
       - cloudhw-pgadmin-data:/var/lib/pgadmin
     networks:

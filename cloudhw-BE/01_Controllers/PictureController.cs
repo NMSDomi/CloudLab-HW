@@ -13,18 +13,17 @@ public class PictureController(
     ) : ControllerBase
 {
     [HttpGet("album/{albumId}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAlbumPictures(Guid albumId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var pictures = await _pictureService.GetAlbumPicturesAsync(albumId, userId);
+        var pictures = await _pictureService.GetAlbumPicturesAsync(albumId, userId ?? string.Empty);
         return Ok(pictures.Select(p => new
         {
             p.Id,
             p.Name,
-            p.CreatedAt,
-            p.Size,
+            p.CreatedAt,            p.UploadedAt,            p.Size,
             p.ContentType,
             p.Width,
             p.Height,
@@ -34,17 +33,18 @@ public class PictureController(
     }
 
     [HttpGet("album/{albumId}/thumbnails")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAlbumThumbnails(Guid albumId)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var pictures = await _pictureService.GetAlbumThumbnailsAsync(albumId, userId);
+        var pictures = await _pictureService.GetAlbumThumbnailsAsync(albumId, userId ?? string.Empty);
         return Ok(pictures.Select(p => new
         {
             p.Id,
             p.Name,
             p.CreatedAt,
+            p.UploadedAt,
             p.Size,
             p.ContentType,
             p.Width,
@@ -55,12 +55,12 @@ public class PictureController(
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetPicture(Guid id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var picture = await _pictureService.GetPictureAsync(id, userId);
+        var picture = await _pictureService.GetPictureAsync(id, userId ?? string.Empty);
         if (picture == null) return NotFound();
 
         return Ok(new
@@ -68,6 +68,7 @@ public class PictureController(
             picture.Id,
             picture.Name,
             picture.CreatedAt,
+            picture.UploadedAt,
             picture.Size,
             picture.ContentType,
             picture.Width,
@@ -77,33 +78,45 @@ public class PictureController(
     }
 
     [HttpGet("{id}/data")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetPictureData(Guid id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var picture = await _pictureService.GetPictureAsync(id, userId);
+        var picture = await _pictureService.GetPictureAsync(id, userId ?? string.Empty);
         if (picture == null) return NotFound();
 
-        return File(picture.Data, picture.ContentType, picture.Name);
+        // Guard against a stored ContentType that wasn't validated at upload time
+        if (!AllowedContentTypes.Contains(picture.ContentType))
+            return BadRequest("Invalid stored content type.");
+
+        var safeName = Path.GetFileName(picture.Name);
+        return File(picture.Data, picture.ContentType, safeName);
     }
 
     [HttpGet("{id}/thumbnail")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetPictureThumbnail(Guid id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var picture = await _pictureService.GetThumbnailAsync(id, userId);
+        var picture = await _pictureService.GetThumbnailAsync(id, userId ?? string.Empty);
         if (picture == null) return NotFound();
 
         if (picture.Thumbnail == null || picture.Thumbnail.Length == 0)
             return NotFound();
 
-        return File(picture.Thumbnail, "image/jpeg", $"thumb_{picture.Name}");
+        var safeName = Path.GetFileName(picture.Name);
+        return File(picture.Thumbnail, "image/jpeg", $"thumb_{safeName}");
     }
 
+    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg", "image/png", "image/gif", "image/webp", "image/tiff", "image/heic", "image/heif", "image/bmp"
+    };
+
     [HttpPost("album/{albumId}")]
+    [RequestSizeLimit(45_000_000)] // 45 MB max per upload
     public async Task<IActionResult> UploadPicture(Guid albumId, IFormFile file)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -112,11 +125,14 @@ public class PictureController(
         if (file == null || file.Length == 0)
             return BadRequest("No file provided.");
 
+        if (!AllowedContentTypes.Contains(file.ContentType))
+            return BadRequest($"File type '{file.ContentType}' is not allowed. Only image files are accepted.");
+
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms);
         var data = ms.ToArray();
 
-        // Try to read image dimensions
+        // Validate image and read dimensions
         int width = 0, height = 0;
         try
         {
@@ -126,7 +142,7 @@ public class PictureController(
         }
         catch
         {
-            // Not a valid image or unsupported format — keep 0x0
+            return BadRequest("The uploaded file is not a valid image.");
         }
 
         var picture = await _pictureService.UploadPictureAsync(
@@ -146,6 +162,7 @@ public class PictureController(
             picture.Id,
             picture.Name,
             picture.CreatedAt,
+            picture.UploadedAt,
             picture.Size,
             picture.ContentType,
             picture.Width,

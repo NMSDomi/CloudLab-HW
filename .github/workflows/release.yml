@@ -6,9 +6,7 @@ on:
       - release
 
 jobs:
-  # ─────────────────────────────────────────────
-  # Deploy to Google App Engine (source-based)
-  # ─────────────────────────────────────────────
+  # Deploy to Google App Engine
   deploy:
     name: Deploy to App Engine
     runs-on: ubuntu-latest
@@ -26,7 +24,37 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # ── Frontend –───────────
+      # ── Backend – resolve app.yaml placeholders and deploy ────────────
+      - name: Render BE app.yaml
+        env:
+          POSTGRES_HOST:     ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_USER:     ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB:       ${{ secrets.POSTGRES_DB }}
+          JWT_ISSUER:        ${{ secrets.JWT_ISSUER }}
+          JWT_AUDIANCE:      ${{ secrets.JWT_AUDIANCE }}
+          JWT_KEY:           ${{ secrets.JWT_KEY }}
+          ADMIN_EMAIL:                ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD:             ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_NAME:                 ${{ secrets.ADMIN_NAME }}
+          FRONTEND_URL:               ${{ secrets.FRONTEND_URL }}
+          ASPNETCORE_AllowedHosts:    ${{ secrets.ASPNETCORE_AllowedHosts }}
+          GCP_CLOUDSQL_CONNECTION_NAME: ${{ secrets.GCP_CLOUDSQL_CONNECTION_NAME }}
+          SMTP_HOST:     ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:     ${{ secrets.SMTP_PORT }}
+          SMTP_USER:     ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:     ${{ secrets.SMTP_FROM }}
+        run: envsubst < cloudhw-BE/app.yaml > cloudhw-BE/app.rendered.yaml
+
+      - name: Deploy BE to App Engine
+        run: |
+          gcloud app deploy cloudhw-BE/app.rendered.yaml \
+            --image-url=${{ needs.build-and-push.outputs.be-gcr-image }} \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --quiet
+
+      # ── Frontend – resolve app.yaml placeholders and deploy ───────────
       - name: Render FE app.yaml
         env:
           BACKEND_URL: ${{ secrets.BACKEND_URL }}

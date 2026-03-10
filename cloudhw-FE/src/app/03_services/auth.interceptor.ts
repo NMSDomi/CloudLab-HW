@@ -18,8 +18,10 @@ export const authInterceptor: HttpInterceptorFn = (
   const token = userService.getToken();
 
   let authReq = req;
+  // Always include credentials so the HttpOnly refresh-token cookie is sent
+  authReq = req.clone({ withCredentials: true });
   if (token) {
-    authReq = req.clone({
+    authReq = authReq.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });
   }
@@ -40,6 +42,7 @@ export const authInterceptor: HttpInterceptorFn = (
               refreshTokenSubject.next(newToken);
               return next(
                 req.clone({
+                  withCredentials: true,
                   setHeaders: { Authorization: `Bearer ${newToken}` }
                 })
               );
@@ -59,6 +62,7 @@ export const authInterceptor: HttpInterceptorFn = (
             switchMap(token =>
               next(
                 req.clone({
+                  withCredentials: true,
                   setHeaders: { Authorization: `Bearer ${token}` }
                 })
               )

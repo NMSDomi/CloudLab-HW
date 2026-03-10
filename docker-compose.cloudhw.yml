@@ -5,22 +5,22 @@ services:
     build:
       context: cloudhw-BE
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     ports:
       - "8081:8080"
     environment:
       POSTGRES_HOST: cloudhw-db
       POSTGRES_PORT: 5432
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
-      POSTGRES_DB: cloudhw-db
-      JWT_ISSUER: "Cloud HW"
-      JWT_AUDIANCE: "Cloud HW User"
-      JWT_KEY: "SHFzdnmcgd648°^šdcaa##y<UIHDpfgkmvzdf792kaskdjmvkahflélogpőádehatz"
-      ADMIN_EMAIL: "cloudhw@cloudhw.com"
-      ADMIN_PASSWORD: "Admin123"
-      ADMIN_NAME: "cloudhw-admin"
-      FRONTEND_URL: "http://localhost:82"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIANCE: ${JWT_AUDIANCE}
+      JWT_KEY: ${JWT_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_NAME: ${ADMIN_NAME}
+      FRONTEND_URL: ${FRONTEND_URL}
     networks: 
       - cloudhw-network
 
@@ -29,23 +29,23 @@ services:
     build:
       context: cloudhw-FE
       dockerfile: Dockerfile
-    restart: always
+    restart: unless-stopped
     ports:
       - "82:8080"
     networks: 
       - cloudhw-network
     environment:
-      - BACKEND_URL=http://localhost:8081/
+      - BACKEND_URL=${BACKEND_URL}
 
   cloudhw-db:
     image: postgres
     container_name: cloudhw-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - cloudhw-db-data:/var/lib/postgresql/data
     networks: 
@@ -54,12 +54,12 @@ services:
   cloudhw-pgadmin:
     image: dpage/pgadmin4
     container_name: cloudhw-pgadmin
-    restart: always
+    restart: unless-stopped
     ports:
       - "5055:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@cloudhw.com
-      PGADMIN_DEFAULT_PASSWORD: strong very strong
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     volumes:
       - cloudhw-pgadmin-data:/var/lib/pgadmin
     networks:

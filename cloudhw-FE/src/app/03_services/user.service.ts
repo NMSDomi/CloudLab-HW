@@ -1,52 +1,71 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
-import { tap, map, switchMap, finalize } from 'rxjs';
+import { tap, map, switchMap, finalize, catchError } from 'rxjs';
 import { Observable, of } from 'rxjs';
 import { User } from '../04_models/user.model';
 import { environmentUrls } from '../../enviroment/enviroment';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    private tokenKey = 'access_token';
-    private refreshKey = 'refresh_token';
+    /** Access token lives only in memory — never written to any storage. */
+    private accessToken: string | null = null;
+    private authInitialized = false;
 
     public currentUser = signal<User | null>(null);
 
     constructor(private http: HttpClient) { }
 
-    login(email: string, password: string) {
-        return this.http.post(`${environmentUrls.users}/login`, { email, password }).pipe(
+    /**
+     * Called once by APP_INITIALIZER before the app renders.
+     * Attempts a silent refresh via the HttpOnly cookie.
+     */
+    initializeAuth(): Observable<User | null> {
+        return this.refreshToken().pipe(
+            switchMap(() => this.getMe(false)),
+            tap(() => { this.authInitialized = true; }),
+            catchError(() => {
+                this.authInitialized = true;
+                return of(null);
+            })
+        );
+    }
+
+    isAuthInitialized(): boolean {
+        return this.authInitialized;
+    }
+
+    login(email: string, password: string, rememberMe = false) {
+        return this.http.post(`${environmentUrls.users}/login`, { email, password, rememberMe }, { withCredentials: true }).pipe(
             tap((resp: any) => {
-                localStorage.setItem(this.tokenKey, resp.token);
-                localStorage.setItem(this.refreshKey, resp.refreshToken);
+                this.accessToken = resp.token;
             }),
             switchMap(() => this.getMe(false))
         );
     }
 
     logout() {
-        return this.http.post(`${environmentUrls.users}/logout`, {}).pipe(
+        return this.http.post(`${environmentUrls.users}/logout`, {}, { withCredentials: true }).pipe(
             finalize(() => {
-                localStorage.removeItem(this.tokenKey);
-                localStorage.removeItem(this.refreshKey);
+                this.accessToken = null;
                 this.currentUser.set(null);
             })
         );
     }
 
     refreshToken() {
-        const token = localStorage.getItem(this.tokenKey);
-        const refreshToken = localStorage.getItem(this.refreshKey);
-        return this.http.post<{ token: string, refreshToken: string }>(`${environmentUrls.users}/refresh-token`, {
-        token,
-        refreshToken
-        }).pipe(
-        tap(resp => {
-            localStorage.setItem(this.tokenKey, resp.token);
-            localStorage.setItem(this.refreshKey, resp.refreshToken);
-        }),
-        map(resp => resp.token)
+        // No body — the HttpOnly cookie is sent automatically by the browser.
+        return this.http.post<{ token: string }>(`${environmentUrls.users}/refresh-token`, {}, { withCredentials: true }).pipe(
+            tap(resp => {
+                this.accessToken = resp.token;
+            }),
+            map(resp => resp.token)
         );
+    }
+
+    /** Clears in-memory auth state without making an HTTP call. Used by the guard when refresh fails. */
+    clearInMemoryAuth(): void {
+        this.accessToken = null;
+        this.currentUser.set(null);
     }
 
     getMe(withCache: boolean = true): Observable<User | null> {
@@ -83,11 +102,26 @@ export class UserService {
         });
     }
 
-    resetPassword(email: string, newPassword: string) {
+    resetPassword(email: string, token: string, newPassword: string) {
         return this.http.post(`${environmentUrls.users}/reset-password`, {
             email,
+            token,
             newPassword
         });
+    }
+
+    forgotPassword(email: string) {
+        return this.http.post(`${environmentUrls.users}/forgot-password`, { email });
+    }
+
+    confirmEmail(userId: string, token: string) {
+        return this.http.get(`${environmentUrls.users}/confirm-email`, {
+            params: { userId, token }
+        });
+    }
+
+    resendConfirmation(email: string) {
+        return this.http.post(`${environmentUrls.users}/resend-confirmation`, { email });
     }
 
     register(data: { email: string; password: string; name: string; role?: string }) {
@@ -97,6 +131,16 @@ export class UserService {
     getAllUsers() {
         return this.http.get<any[]>(`${environmentUrls.users}/all`).pipe(
             map(backendUsers => backendUsers.map(u => this.mapBackendUserToModel(u)))
+        );
+    }
+
+    searchUsers(q: string): Observable<{ id: string; name: string; email: string }[]> {
+        return this.http.get<any[]>(`${environmentUrls.users}/search`, { params: { q } }).pipe(
+            map(users => users.map(u => ({
+                id: u.Id ?? u.id,
+                name: u.Name ?? u.name,
+                email: u.Email ?? u.email
+            })))
         );
     }
 
@@ -115,11 +159,11 @@ export class UserService {
     }
 
     getToken(): string | null {
-        return localStorage.getItem(this.tokenKey);
+        return this.accessToken;
     }
 
     getRefreshToken(): string | null {
-        return localStorage.getItem(this.refreshKey);
+        return null; // Managed server-side via HttpOnly cookie — not accessible from JS
     }
 
     isTokenExpired(token: string | null): boolean {

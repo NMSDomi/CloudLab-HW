@@ -10,6 +10,7 @@ public interface IAlbumRepository
     Task<List<AlbumSummary>> GetByOwnerIdAsync(string userId);
     Task<List<AlbumSummary>> GetPublicAlbumsAsync();
     Task<List<AlbumSummary>> GetSharedWithUserAsync(string userId);
+    Task<List<AlbumSummary>> SearchAsync(string query, string userId);
     Task<Album> CreateAsync(Album album);
     Task UpdateAsync(Album album);
     Task DeleteAsync(Album album);

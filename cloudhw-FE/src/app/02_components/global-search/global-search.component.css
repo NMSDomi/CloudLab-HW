@@ -1,0 +1,238 @@
+/* Backdrop */
+.gs-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 80px;
+  animation: gs-fade-in 0.15s ease;
+}
+
+@keyframes gs-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Modal */
+.gs-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  animation: gs-slide-down 0.18s ease;
+}
+
+@keyframes gs-slide-down {
+  from { transform: translateY(-16px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Input row */
+.gs-input-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.gs-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-hint);
+  flex-shrink: 0;
+}
+
+.gs-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  caret-color: var(--primary);
+}
+
+.gs-input::placeholder {
+  color: var(--text-faint);
+}
+
+.gs-esc-hint {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+/* Results list */
+.gs-results {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.gs-results::-webkit-scrollbar {
+  width: 4px;
+}
+.gs-results::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+/* Single result */
+.gs-result-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  color: var(--text);
+}
+
+.gs-result-item:hover,
+.gs-result-item--active {
+  background: rgba(233, 69, 96, 0.12);
+}
+
+.gs-result-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.gs-result-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gs-result-owner {
+  font-size: 0.78rem;
+  color: var(--text-hint);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Thumbnail in result */
+.gs-result-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  overflow: hidden;
+}
+
+.gs-result-thumb svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gs-result-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Badges */
+.gs-result-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.gs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--text-faint);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.gs-empty svg {
+  width: 28px;
+  height: 28px;
+  opacity: 0.4;
+}
+
+/* Hint */
+.gs-hint {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.86rem;
+}
+
+/* Loading */
+.gs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 16px;
+  color: var(--text-hint);
+  font-size: 0.86rem;
+}
+
+.gs-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-hover);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.gs-footer {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--bg-glass);
+  font-size: 0.75rem;
+  color: var(--text-faint);
+}
+
+.gs-footer kbd {
+  display: inline-block;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  margin-right: 2px;
+}

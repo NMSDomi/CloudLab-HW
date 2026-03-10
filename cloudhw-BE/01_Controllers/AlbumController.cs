@@ -45,17 +45,31 @@ public class AlbumController(
         return Ok(albums);
     }
 
+    [HttpGet("search")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Search([FromQuery] string q)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<object>());
+
+        var results = await _albumService.SearchAlbumsAsync(q, userId ?? string.Empty);
+        return Ok(results);
+    }
+
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAlbum(Guid id)
     {
-        //TODO: A megosztottaknak is meg kell engedni a hozzáférést, nem csak a tulajdonosnak
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var album = await _albumService.GetAlbumAsync(id, userId);
+        var album = await _albumService.GetAlbumAsync(id, userId ?? string.Empty);
         if (album == null) return NotFound();
 
         var pictureCount = await _albumService.GetPictureCountAsync(id);
+
+        // Only expose share recipients to authenticated users (owner / share target)
+        var isAuthenticated = !string.IsNullOrEmpty(userId);
 
         return Ok(new
         {
@@ -69,12 +83,14 @@ public class AlbumController(
             OwnerName = album.Owner?.Name,
             PictureCount = pictureCount,
             CoverPictureId = album.CoverPictureId,
-            SharedWith = album.SharedWith.Select(s => new
-            {
-                s.UserId,
-                UserName = s.User?.Name,
-                s.SharedAt
-            })
+            SharedWith = isAuthenticated
+                ? album.SharedWith.Select(s => new
+                {
+                    s.UserId,
+                    UserName = s.User?.Name,
+                    s.SharedAt
+                })
+                : Enumerable.Empty<object>()
         });
     }
 
@@ -149,12 +165,12 @@ public class AlbumController(
     }
 
     [HttpGet("{id}/cover")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCoverThumbnail(Guid id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null) return Unauthorized();
 
-        var album = await _albumService.GetAlbumAsync(id, userId);
+        var album = await _albumService.GetAlbumAsync(id, userId ?? string.Empty);
         if (album == null) return NotFound();
 
         if (album.CoverPictureId == null || album.CoverPicture == null)

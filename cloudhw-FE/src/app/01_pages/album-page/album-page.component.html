@@ -11,12 +11,12 @@
   </div>
 } @else {
   <div class="album-container">
-    <!-- Toast / Error -->
+    <!-- Floating toasts -->
     @if (toastMessage()) {
-      <div class="msg msg--success">{{ toastMessage() }}</div>
+      <div class="toast toast--success">{{ toastMessage() }}</div>
     }
     @if (errorMessage()) {
-      <div class="msg msg--error">{{ errorMessage() }}</div>
+      <div class="toast toast--error">{{ errorMessage() }}</div>
     }
 
     <div class="album-card-wrap">
@@ -58,6 +58,10 @@
               Add Photos
               <input type="file" multiple accept="image/*" hidden (change)="onFilesSelected($event)" />
             </label>
+            <button class="btn btn--secondary btn--sm" (click)="openShareModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              Share
+            </button>
             <button class="btn btn--danger btn--sm" (click)="confirmDeleteAlbum()">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Delete Album
@@ -88,6 +92,7 @@
       }
 
       <!-- Pictures grid -->
+      <div #gridContainer>
       @if (!picturesLoading() && pictures().length === 0) {
         <div class="pictures-empty">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
@@ -105,17 +110,25 @@
         </div>
       } @else {
         <div class="pictures-grid"
+             [style.height.px]="masonryLayout().totalHeight"
              (dragover)="onDragOver($event)"
              (dragleave)="onDragLeave($event)"
              (drop)="onDrop($event)"
              [class.pictures-grid--dragover]="dragOver()">
           @for (pic of sortedPictures(); track pic.id) {
-            <div class="picture-card" [class.picture-card--cover]="album()!.coverPictureId === pic.id" (click)="openLightbox(pic)">
+            <div class="picture-card"
+                 [class.picture-card--cover]="album()!.coverPictureId === pic.id"
+                 [style.left.px]="masonryLayout().itemPositions[pic.id]?.left || 0"
+                 [style.top.px]="masonryLayout().itemPositions[pic.id]?.top || 0"
+                 [style.width.px]="masonryLayout().itemPositions[pic.id]?.width || 200"
+                 [style.height.px]="masonryLayout().itemPositions[pic.id]?.height || 150"
+                 (click)="openLightbox(pic)">
               <div class="picture-thumb">
                 @if (thumbnailUrls()[pic.id]) {
-                  <img [src]="thumbnailUrls()[pic.id]" alt="pic.name" [title]="pic.name" loading="lazy" />
+                  <img [src]="thumbnailUrls()[pic.id]" alt="pic.name" [title]="pic.name" loading="lazy" (load)="onThumbnailLoad($event, pic)" />
                 } @else {
-                  <div class="picture-thumb-placeholder">
+                  <div class="picture-thumb-placeholder"
+                       [style.aspect-ratio]="pic.width && pic.height ? pic.width + '/' + pic.height : '4/3'">
                     <div class="placeholder-shimmer"></div>
                   </div>
                 }
@@ -148,6 +161,7 @@
           }
         </div>
       }
+      </div>
     </div>
 
     <!-- Lightbox -->
@@ -200,8 +214,9 @@
             <span class="lightbox-name">{{ trimName(lightboxPic()!.name) }}</span>
             <span class="lightbox-meta">
               {{ lightboxPic()!.width }}×{{ lightboxPic()!.height }} &middot;
-              {{ formatSize(lightboxPic()!.size) }} &middot;
-              {{ formatDate(lightboxPic()!.createdAt) }}
+              {{ formatSize(lightboxPic()!.size) }}<br>
+              Taken: {{ formatDate(lightboxPic()!.createdAt) }} &middot;
+              Uploaded: {{ formatDate(lightboxPic()!.uploadedAt) }}
             </span>
           </div>
         </div>
@@ -219,6 +234,15 @@
           </div>
         </div>
       </div>
+    }
+
+    <!-- Share album modal -->
+    @if (sharingAlbum()) {
+      <app-share-album-modal
+        [albumId]="album()!.id"
+        [albumName]="album()!.name"
+        (closed)="closeShareModal()"
+      />
     }
   </div>
 }

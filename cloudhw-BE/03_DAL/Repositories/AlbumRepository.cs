@@ -66,6 +66,24 @@ public class AlbumRepository(DataContext _context) : IAlbumRepository
             .ToListAsync();
     }
 
+    public async Task<List<AlbumSummary>> SearchAsync(string query, string userId)
+    {
+        var q = query.ToLower();
+        return await _context.Albums
+            .Where(a =>
+                (a.OwnerId == userId || a.IsPublic || a.SharedWith.Any(s => s.UserId == userId)) &&
+                (a.Name.ToLower().Contains(q) || (a.Owner.Name != null && a.Owner.Name.ToLower().Contains(q)))
+            )
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new AlbumSummary(
+                a.Id, a.Name, a.Description, a.CreatedAt, a.Size,
+                a.IsPublic, a.OwnerId, a.Owner.Name,
+                a.Pictures.Count, a.CoverPictureId
+            ))
+            .Take(20)
+            .ToListAsync();
+    }
+
     public async Task<Album> CreateAsync(Album album)
     {
         _context.Albums.Add(album);

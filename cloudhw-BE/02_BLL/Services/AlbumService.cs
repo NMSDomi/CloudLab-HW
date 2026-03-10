@@ -1,12 +1,15 @@
 using cloudhw_BE.BLL.Services.Interfaces;
 using cloudhw_BE.DAL.Models;
 using cloudhw_BE.DAL.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 namespace cloudhw_BE.BLL.Services;
 
 public class AlbumService(
     IAlbumRepository _albumRepo,
-    IAlbumShareRepository _shareRepo
+    IAlbumShareRepository _shareRepo,
+    IPictureRepository _pictureRepo,
+    UserManager<User> _userManager
     ) : IAlbumService
 {
     public async Task<Album?> GetAlbumAsync(Guid id, string requestingUserId)
@@ -38,6 +41,12 @@ public class AlbumService(
     public async Task<List<AlbumSummary>> GetSharedWithMeAsync(string userId)
     {
         return await _albumRepo.GetSharedWithUserAsync(userId);
+    }
+
+    public async Task<List<AlbumSummary>> SearchAlbumsAsync(string query, string userId)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return [];
+        return await _albumRepo.SearchAsync(query.Trim(), userId);
     }
 
     public async Task<Album> CreateAlbumAsync(string name, string? description, bool isPublic, string ownerId)
@@ -86,6 +95,11 @@ public class AlbumService(
         if (album == null || album.OwnerId != ownerId)
             return false;
 
+        // Ensure the target user actually exists before creating the share record
+        var targetUser = await _userManager.FindByIdAsync(targetUserId);
+        if (targetUser == null)
+            return false;
+
         if (await _shareRepo.IsSharedWithUserAsync(targetUserId, albumId))
             return true; // already shared
 
@@ -117,6 +131,13 @@ public class AlbumService(
     {
         var album = await _albumRepo.GetByIdAsync(albumId);
         if (album == null || album.OwnerId != ownerId)
+            return false;
+
+        // Verify the picture actually belongs to this album
+        var pictures = await _albumRepo.GetPictureCountAsync(albumId);
+        var picture = (await _pictureRepo.GetByAlbumIdAsync(albumId))
+            .FirstOrDefault(p => p.Id == pictureId);
+        if (picture == null)
             return false;
 
         album.CoverPictureId = pictureId;

@@ -1,0 +1,21 @@
+/* Component-specific: status display (loading / success / error) */
+.confirm-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.confirm-status.success {
+  color: var(--success);
+}
+
+.confirm-status.error {
+  color: var(--error);
+}
+
+.confirm-status p {
+  font-size: 1rem;
+  margin: 0;
+}

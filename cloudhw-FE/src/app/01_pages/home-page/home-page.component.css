@@ -1,4 +1,112 @@
 .home-container {
-  padding: 2rem;
-  color: #e0e0e0;
+  padding: 32px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+}
+
+.home-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.home-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.home-count {
+  font-size: 0.9rem;
+  color: var(--text-hint);
+}
+
+.home-loading,
+.home-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 80px 0;
+  color: var(--text-hint);
+}
+
+.home-empty p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Home-specific album card extras */
+.album-name {
+  margin: 0 0 2px 0;
+}
+
+.album-owner {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(233, 69, 96, 0.85);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.album-owner:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--bg-active);
+  color: var(--text);
+}
+
+.page-btn--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .home-container {
+    padding: 20px 14px;
+  }
 }

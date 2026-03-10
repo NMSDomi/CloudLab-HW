@@ -246,6 +246,10 @@ namespace cloudhw_BE.Migrations
                         .IsRequired()
                         .HasColumnType("bytea");
 
+                    b.Property<DateTime>("UploadedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("timestamp(0) with time zone");
+
                     b.Property<int>("Width")
                         .HasColumnType("integer");
 
