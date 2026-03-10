@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../03_services/user.service';
 import { AlbumService } from '../../03_services/album.service';
@@ -9,12 +8,13 @@ import { PictureService } from '../../03_services/picture.service';
 import { UploadService, SelectedFile } from '../../03_services/upload.service';
 import { User } from '../../04_models/user.model';
 import { Album } from '../../04_models/album.model';
-import { environmentUrls } from '../../../enviroment/enviroment';
+import { ShareAlbumModalComponent } from '../../02_components/share-album-modal/share-album-modal.component';
+import { PasswordStrengthComponent } from '../../02_components/password-strength/password-strength.component';
 
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ShareAlbumModalComponent, PasswordStrengthComponent],
   templateUrl: './profile-page.component.html',
   styleUrls: ['./profile-page.component.css']
 })
@@ -24,7 +24,6 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private albumService = inject(AlbumService);
   private pictureService = inject(PictureService);
-  private http = inject(HttpClient);
   uploadService = inject(UploadService);
 
   profileUser = signal<User | null>(null);
@@ -44,9 +43,20 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
+  newPasswordValid = false;
+
+  // Albums tab (own profile only)
+  albumsTab = signal<'my' | 'shared'>('my');
+  sharedAlbums = signal<Album[]>([]);
+  sharedAlbumsLoading = signal(false);
+  private sharedAlbumsLoaded = false;
+  sharedCoverUrls = signal<Record<string, string>>({});
 
   // Delete album
   deletingAlbum = signal<Album | null>(null);
+
+  // Share album
+  sharingAlbum = signal<Album | null>(null);
 
   // Messages
   toastMessage = signal('');
@@ -84,6 +94,12 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (!id) return;
+
+      // Reset tab state on navigation
+      this.albumsTab.set('my');
+      this.sharedAlbumsLoaded = false;
+      this.sharedAlbums.set([]);
+      this.sharedCoverUrls.set({});
 
       const currentUser = this.userService.currentUser();
       if (currentUser && currentUser.id === id) {
@@ -157,16 +173,30 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     this.clearMessages();
   }
 
+  get isChangePasswordValid(): boolean {
+    return (
+      this.currentPassword.length > 0 &&
+      this.newPasswordValid &&
+      this.newPassword === this.confirmPassword &&
+      this.currentPassword !== this.newPassword
+    );
+  }
+
   savePassword() {
     this.clearMessages();
 
-    if (this.newPassword !== this.confirmPassword) {
-      this.errorMessage.set('Passwords do not match.');
+    if (this.currentPassword === this.newPassword) {
+      this.errorMessage.set('Az új jelszó nem egyezhet a jelenlegi jelszóval.');
       return;
     }
 
-    if (this.newPassword.length < 6) {
-      this.errorMessage.set('Password must be at least 6 characters.');
+    if (this.newPassword !== this.confirmPassword) {
+      this.errorMessage.set('A két jelszó nem egyezik.');
+      return;
+    }
+
+    if (!this.newPasswordValid) {
+      this.errorMessage.set('A jelszó nem felel meg a követelményeknek.');
       return;
     }
 
@@ -192,6 +222,62 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
   private showToast(message: string) {
     this.toastMessage.set(message);
     setTimeout(() => this.toastMessage.set(''), 3000);
+  }
+
+  switchTab(tab: 'my' | 'shared') {
+    this.albumsTab.set(tab);
+    if (tab === 'shared' && !this.sharedAlbumsLoaded) {
+      this.loadSharedAlbums();
+    }
+  }
+
+  private loadSharedAlbums() {
+    this.sharedAlbumsLoading.set(true);
+    this.albumService.getSharedWithMe().subscribe({
+      next: (albums) => {
+        this.sharedAlbums.set(albums);
+        this.sharedAlbumsLoading.set(false);
+        this.sharedAlbumsLoaded = true;
+        this.loadSharedCoverImages(albums);
+      },
+      error: () => {
+        this.sharedAlbumsLoading.set(false);
+      }
+    });
+  }
+
+  getSharedCoverUrl(album: Album): string | null {
+    if (!album.coverPictureId) return null;
+    return this.sharedCoverUrls()[album.id] || null;
+  }
+
+  private loadSharedCoverImages(albums: Album[]): void {
+    const withCovers = albums.filter(a => a.coverPictureId);
+    if (withCovers.length === 0) return;
+
+    const oldUrls = this.sharedCoverUrls();
+    Object.values(oldUrls).forEach(url => URL.revokeObjectURL(url));
+
+    const newUrls: Record<string, string> = {};
+    let loaded = 0;
+
+    for (const album of withCovers) {
+      this.pictureService.getThumbnailBlob(album.coverPictureId!).subscribe({
+        next: (blob) => {
+          newUrls[album.id] = URL.createObjectURL(blob);
+          loaded++;
+          if (loaded === withCovers.length) {
+            this.sharedCoverUrls.set({ ...newUrls });
+          }
+        },
+        error: () => {
+          loaded++;
+          if (loaded === withCovers.length) {
+            this.sharedCoverUrls.set({ ...newUrls });
+          }
+        }
+      });
+    }
   }
 
   private loadAlbums() {
@@ -233,10 +319,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
     let loaded = 0;
 
     for (const album of withCovers) {
-      this.http.get(
-        `${environmentUrls.pictures}/${album.coverPictureId}/thumbnail`,
-        { responseType: 'blob' }
-      ).subscribe({
+      this.pictureService.getThumbnailBlob(album.coverPictureId!).subscribe({
         next: (blob) => {
           newUrls[album.id] = URL.createObjectURL(blob);
           loaded++;
@@ -264,7 +347,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   navigateToAlbum(album: Album): void {
     if (this.uploadService.isUploading(album.id)) return;
-    this.router.navigate(['/album', album.id]);
+    this.router.navigate(['/album', album.id], { queryParams: { returnUrl: this.router.url } });
   }
 
   deleteAlbum(album: Album, event: Event): void {
@@ -274,6 +357,15 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
 
   cancelDeleteAlbum(): void {
     this.deletingAlbum.set(null);
+  }
+
+  openShareModal(album: Album, event: Event): void {
+    event.stopPropagation();
+    this.sharingAlbum.set(album);
+  }
+
+  closeShareModal(): void {
+    this.sharingAlbum.set(null);
   }
 
   confirmDeleteAlbum(): void {

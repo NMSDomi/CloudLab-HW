@@ -1,0 +1,309 @@
+.share-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 7000;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.share-card {
+  background: rgba(22, 20, 52, 0.97);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Header */
+.share-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.share-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.share-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.share-album-name {
+  font-size: 0.82rem;
+  color: var(--text-hint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-hint);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.share-close:hover { color: var(--text); }
+
+/* Error */
+.share-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.85rem;
+  padding: 8px 12px;
+}
+
+/* Search */
+.share-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.share-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.share-search-input {
+  width: 100%;
+  padding: 10px 40px 10px 38px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.share-search-input::placeholder { color: rgba(255, 255, 255, 0.28); }
+.share-search-input:focus { border-color: rgba(233, 69, 96, 0.5); }
+
+.share-search-spinner {
+  position: absolute;
+  right: 12px;
+}
+
+/* Search results dropdown */
+.share-results {
+  list-style: none;
+  padding: 0;
+  margin: -10px 0 0 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.share-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.share-result-item:hover { background: rgba(233, 69, 96, 0.1); }
+
+.share-add-icon {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.share-result-item:hover .share-add-icon { color: var(--primary); }
+
+/* User avatar */
+.share-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--gradient-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.share-user-avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: 0.72rem;
+}
+
+.share-user-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.share-user-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-user-email {
+  font-size: 0.74rem;
+  color: var(--text-hint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Section label */
+.share-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* Chips */
+.share-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.share-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(233, 69, 96, 0.14);
+  border: 1px solid rgba(233, 69, 96, 0.35);
+  border-radius: 20px;
+  padding: 4px 10px 4px 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-hint);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.chip-remove:hover { color: var(--text); }
+
+/* Share button */
+.btn-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 20px;
+  background: var(--gradient-brand-light);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-share:hover:not(:disabled) { opacity: 0.88; }
+.btn-share:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Current shares */
+.share-loading {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.share-empty {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.28);
+  margin: 0;
+}
+
+.share-current-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.share-current-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.share-remove-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.share-remove-btn:hover {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.14);
+}

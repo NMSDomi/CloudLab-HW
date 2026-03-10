@@ -1,7 +1,6 @@
-import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked, HostListener, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlbumService } from '../../03_services/album.service';
 import { PictureService } from '../../03_services/picture.service';
@@ -9,8 +8,7 @@ import { UserService } from '../../03_services/user.service';
 import { UploadService, SelectedFile } from '../../03_services/upload.service';
 import { Album } from '../../04_models/album.model';
 import { Picture } from '../../04_models/picture.model';
-import { environmentUrls } from '../../../enviroment/enviroment';
-import { catchError, EMPTY, from, map, mergeMap } from 'rxjs';
+import { ShareAlbumModalComponent } from '../../02_components/share-album-modal/share-album-modal.component';
 
 type SortField = 'name' | 'createdAt' | 'size';
 type SortDir = 'asc' | 'desc';
@@ -18,17 +16,16 @@ type SortDir = 'asc' | 'desc';
 @Component({
   selector: 'app-album-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ShareAlbumModalComponent],
   templateUrl: './album-page.component.html',
   styleUrls: ['./album-page.component.css']
 })
-export class AlbumPageComponent implements OnInit, OnDestroy {
+export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private albumService = inject(AlbumService);
   private pictureService = inject(PictureService);
   private userService = inject(UserService);
-  private http = inject(HttpClient);
   uploadService = inject(UploadService);
 
   album = signal<Album | null>(null);
@@ -53,8 +50,136 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
   dragOver = signal(false);
   selectedFiles = signal<SelectedFile[]>([]);
   confirmingDelete = signal(false);
+  sharingAlbum = signal(false);
 
   private unsubUploadComplete: (() => void) | null = null;
+
+  // Masonry layout
+  @ViewChild('gridContainer') private gridContainerRef?: ElementRef<HTMLElement>;
+  private masonryMeasured = false;
+  private resizeObserver?: ResizeObserver;
+  private dimensionCorrectionTimer: any;
+  private pendingDimensionCorrections: Record<string, { width: number; height: number }> = {};
+  containerWidth = signal(0);
+
+  /**
+   * Justified masonry layout engine.
+   *
+   * Packs pictures into rows so that every row fills the full container width,
+   * similar to Google Photos or Flickr's justified-grid layout.
+   *
+   * Algorithm overview:
+   *   1. Accumulate pictures into a pending row buffer one by one.
+   *   2. After each addition, compute how wide the row would naturally be at
+   *      TARGET_ROW_HEIGHT — i.e. each image drawn at its real aspect ratio.
+   *   3. Once the natural width meets or exceeds the container width, the row
+   *      is "full": scale every image's width/height uniformly so the row fills
+   *      the container exactly (justified), then start a new row.
+   *   4. If we reach the last picture while the row is still short (not enough
+   *      pictures to fill the width), keep TARGET_ROW_HEIGHT instead of
+   *      over-stretching the final partial row.
+   *
+   * Returns an absolute-position map (left / top / width / height) for every
+   * picture id, plus the total layout height needed by the container.
+   */
+  masonryLayout = computed(() => {
+    const pictures = this.sortedPictures();
+    const containerWidth = this.containerWidth();
+
+    // Nothing to lay out yet — container hasn't been measured or there are no pictures
+    if (!containerWidth || pictures.length === 0) {
+      return {
+        itemPositions: {} as Record<string, { left: number; top: number; width: number; height: number }>,
+        totalHeight: 0
+      };
+    }
+
+    /** Pixel gap between neighbouring pictures (horizontal and vertical) */
+    const ITEM_GAP = 6;
+
+    /**
+     * The ideal row height we aim for.
+     * Full rows will deviate slightly after justification; partial last rows
+     * will use this exact height so they don't stretch awkwardly.
+     */
+    const TARGET_ROW_HEIGHT = 280;
+
+    /** Absolute-position output map, keyed by picture id */
+    const itemPositions: Record<string, { left: number; top: number; width: number; height: number }> = {};
+
+    /** Vertical offset where the next row should start (advances after each committed row) */
+    let nextRowTop = 0;
+
+    /**
+     * Returns the aspect ratio (width ÷ height) for a picture.
+     * Falls back to 4:3 if the picture has no stored dimensions.
+     */
+    const getAspectRatio = (pic: (typeof pictures)[0]) =>
+      pic.width > 0 && pic.height > 0 ? pic.width / pic.height : 4 / 3;
+
+    /**
+     * Saves the final pixel positions for a completed row into `itemPositions`
+     * and advances `nextRowTop` past the row.
+     *
+     * @param rowPictures  - pictures belonging to this row
+     * @param rowHeight    - the uniform height all pictures in this row will share
+     */
+    const commitRow = (rowPictures: typeof pictures, rowHeight: number) => {
+      let leftOffset = 0;
+      for (const pic of rowPictures) {
+        // Each picture's width is its aspect ratio × the shared row height
+        const itemWidth = rowHeight * getAspectRatio(pic);
+        itemPositions[pic.id] = { left: leftOffset, top: nextRowTop, width: itemWidth, height: rowHeight };
+        leftOffset += itemWidth + ITEM_GAP;
+      }
+      nextRowTop += rowHeight + ITEM_GAP;
+    };
+
+    /** Buffer of pictures being accumulated for the current row */
+    let pendingRowPictures: typeof pictures = [];
+
+    for (let i = 0; i < pictures.length; i++) {
+      pendingRowPictures.push(pictures[i]);
+
+      const pendingCount = pendingRowPictures.length;
+
+      /** Sum of aspect ratios for all pending pictures — represents their combined "width units" */
+      const combinedAspectRatio = pendingRowPictures.reduce((sum, pic) => sum + getAspectRatio(pic), 0);
+
+      /**
+       * How wide this row would be if every picture were drawn at TARGET_ROW_HEIGHT.
+       * When this meets the container width, the row is ready to be justified and committed.
+       */
+      const naturalRowWidth = combinedAspectRatio * TARGET_ROW_HEIGHT + ITEM_GAP * (pendingCount - 1);
+
+      const isLastPicture = i === pictures.length - 1;
+
+      if (naturalRowWidth >= containerWidth || isLastPicture) {
+        let finalRowHeight: number;
+
+        if (isLastPicture && naturalRowWidth < containerWidth) {
+          // The final row doesn't have enough pictures to fill the width naturally.
+          // Use the target height as-is rather than over-stretching the images.
+          finalRowHeight = TARGET_ROW_HEIGHT;
+        } else {
+          // Scale the row height so all pictures together fill the container width exactly.
+          // Formula: solve (combinedAR × rowHeight + GAP × (n-1)) = containerWidth for rowHeight
+          finalRowHeight = (containerWidth - ITEM_GAP * (pendingCount - 1)) / combinedAspectRatio;
+        }
+
+        commitRow(pendingRowPictures, finalRowHeight);
+        pendingRowPictures = [];
+      }
+    }
+
+    // Subtract the trailing gap that was added after the last row
+    return { itemPositions, totalHeight: nextRowTop > 0 ? nextRowTop - ITEM_GAP : 0 };
+  });
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.measureContainer();
+  }
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
@@ -110,8 +235,11 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
       switch (field) {
         case 'name':
           return mult * a.name.localeCompare(b.name);
-        case 'createdAt':
-          return mult * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        case 'createdAt': { // Fallback to uploadedAt if createdAt is missing, to keep consistent with displayed dates
+          const aDate = a.createdAt ?? a.uploadedAt;
+          const bDate = b.createdAt ?? b.uploadedAt;
+          return mult * (new Date(aDate).getTime() - new Date(bDate).getTime());
+        }
         case 'size':
           return mult * (a.size - b.size);
         default:
@@ -120,6 +248,65 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
     });
     return pics;
   });
+
+  ngAfterViewChecked() {
+    if (!this.masonryMeasured) {
+      this.measureContainer();
+    }
+  }
+
+  private measureContainer() {
+    const el = this.gridContainerRef?.nativeElement;
+    if (!el) return;
+    const w = el.getBoundingClientRect().width;
+    if (w > 0) {
+      this.containerWidth.set(w);
+      this.masonryMeasured = true;
+
+      // Use ResizeObserver to track container width changes (e.g. scrollbar appearing)
+      if (!this.resizeObserver) {
+        this.resizeObserver = new ResizeObserver(entries => {
+          for (const entry of entries) {
+            const newW = entry.contentRect.width;
+            if (newW > 0 && Math.abs(newW - this.containerWidth()) > 1) {
+              this.containerWidth.set(newW);
+            }
+          }
+        });
+        this.resizeObserver.observe(el);
+      }
+    }
+  }
+
+  /** Correct masonry AR when thumbnail reveals actual dimensions */
+  onThumbnailLoad(event: Event, pic: Picture) {
+    const img = event.target as HTMLImageElement;
+    if (!img || img.naturalWidth === 0 || img.naturalHeight === 0) return;
+
+    // Only correct if stored dimensions are missing (0) or significantly wrong
+    const storedAR = pic.width > 0 && pic.height > 0 ? pic.width / pic.height : 0;
+    const actualAR = img.naturalWidth / img.naturalHeight;
+
+    if (storedAR === 0 || Math.abs(storedAR - actualAR) > 0.1) {
+      this.pendingDimensionCorrections[pic.id] = {
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      };
+      clearTimeout(this.dimensionCorrectionTimer);
+      this.dimensionCorrectionTimer = setTimeout(() => this.applyDimensionCorrections(), 100);
+    }
+  }
+
+  private applyDimensionCorrections() {
+    const corrections = this.pendingDimensionCorrections;
+    if (Object.keys(corrections).length === 0) return;
+
+    const correctedPics = this.pictures().map(p =>
+      corrections[p.id] ? { ...p, ...corrections[p.id] } : p
+    );
+    this.pictures.set(correctedPics);
+    this.pendingDimensionCorrections = {};
+  }
 
   ngOnInit() {
     this.unsubUploadComplete = this.uploadService.onComplete(() => {
@@ -137,6 +324,8 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.unsubUploadComplete) this.unsubUploadComplete();
+    this.resizeObserver?.disconnect();
+    clearTimeout(this.dimensionCorrectionTimer);
     // Revoke blob URLs
     Object.values(this.thumbnailUrls()).forEach(url => URL.revokeObjectURL(url));
     const lbUrl = this.lightboxUrl();
@@ -182,31 +371,18 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
   private loadThumbnails(pics: Picture[]): void {
     if (pics.length === 0) return;
 
-    // Előző képek törlése a memóriaszivárgás elkerülésére
     const oldUrls = this.thumbnailUrls();
     Object.values(oldUrls).forEach(url => URL.revokeObjectURL(url));
     this.thumbnailUrls.set({});
 
-    const MAX_CONCURRENT = 6;
-
-    // TODO: Replace with a batch API in the backend to avoid this many requests
-    from(pics).pipe(
-      // A mergeMap automatikusan limitálja a párhuzamos kérések számát
-      mergeMap(pic => 
-        this.pictureService.getThumbnailBlob(pic.id).pipe(
-          map(blob => ({ id: pic.id, blob })),
-          catchError(() => EMPTY) // Hiba esetén (pl. 404) csendben továbblép a következőre
-        ), 
-        MAX_CONCURRENT 
-      )
-    ).subscribe({
-      next: (result) => {
-        const url = URL.createObjectURL(result.blob);
-        
-        this.thumbnailUrls.update(currentUrls => ({ 
-          ...currentUrls, 
-          [result.id]: url 
-        }));
+    const albumId = pics[0].albumId;
+    this.pictureService.getAlbumThumbnails(albumId).subscribe({
+      next: (thumbnails) => {
+        const urls: Record<string, string> = {};
+        for (const t of thumbnails) {
+          urls[t.id] = `data:${t.contentType};base64,${t.thumbnail}`;
+        }
+        this.thumbnailUrls.set(urls);
       }
     });
   }
@@ -273,6 +449,11 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
   }
 
   goBack() {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+      return;
+    }
     const a = this.album();
     if (a) {
       this.router.navigate(['/profile', a.ownerId]);
@@ -287,6 +468,14 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
 
   cancelDeleteAlbum() {
     this.confirmingDelete.set(false);
+  }
+
+  openShareModal() {
+    this.sharingAlbum.set(true);
+  }
+
+  closeShareModal() {
+    this.sharingAlbum.set(false);
   }
 
   deleteAlbum() {
@@ -368,10 +557,7 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
     this.lightboxUrl.set(null);
     this.lightboxLoading.set(true);
 
-    this.http.get(
-      `${environmentUrls.pictures}/${pic.id}/data`,
-      { responseType: 'blob' }
-    ).subscribe({
+    this.pictureService.getPictureBlob(pic.id).subscribe({
       next: (blob) => {
         this.lightboxUrl.set(URL.createObjectURL(blob));
         this.lightboxLoading.set(false);
@@ -437,7 +623,8 @@ export class AlbumPageComponent implements OnInit, OnDestroy {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  formatDate(date: string): string {
+  formatDate(date: string | null | undefined): string {
+    if (!date) return 'Unknown';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',

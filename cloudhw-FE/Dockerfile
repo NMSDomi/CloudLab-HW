@@ -6,10 +6,10 @@ COPY . .
 
 RUN npm run build
 
-FROM nginx:1.25.2 as ngx
+FROM nginx:1.27-alpine as ngx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /usr/src/app/dist/cloudhw-fe/browser /usr/share/nginx/html
-COPY --from=build /usr/src/app/src/assets/env.sample.js /usr/share/nginx/html/assets/env.sample.js
+COPY --from=build /usr/src/app/src/assets/env.template.js /usr/share/nginx/html/assets/env.template.js
 
 EXPOSE 80
-CMD ["/bin/sh", "-c", "envsubst < /usr/share/nginx/html/assets/env.sample.js > /usr/share/nginx/html/assets/env.js && exec nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "envsubst < /usr/share/nginx/html/assets/env.template.js > /usr/share/nginx/html/assets/env.js && exec nginx -g 'daemon off;'"]

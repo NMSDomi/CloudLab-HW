@@ -36,80 +36,182 @@
 
       <!-- Albums Section -->
       <div class="albums-section">
-        <h2 class="albums-title">
-          @if (isOwnProfile()) {
-            My Albums
-          } @else {
-            Public Albums
-          }
-        </h2>
+        @if (isOwnProfile()) {
+          <!-- Sliding tab header -->
+          <div class="albums-tabs">
+            <button class="albums-tab" [class.albums-tab--active]="albumsTab() === 'my'" (click)="switchTab('my')">
+              My Albums
+            </button>
+            <button class="albums-tab" [class.albums-tab--active]="albumsTab() === 'shared'" (click)="switchTab('shared')">
+              Shared with me
+            </button>
+            <span class="albums-tab-indicator" [class.albums-tab-indicator--right]="albumsTab() === 'shared'"></span>
+          </div>
 
-        @if (albumsLoading()) {
-          <div class="albums-loading">
-            <div class="spinner"></div>
-            <span>Loading albums...</span>
+          <!-- Slider viewport -->
+          <div class="albums-slider-viewport">
+            <div class="albums-slider-track" [class.albums-slider-track--shifted]="albumsTab() === 'shared'">
+
+              <!-- Slide 1: My Albums -->
+              <div class="albums-slide">
+                @if (albumsLoading()) {
+                  <div class="albums-loading">
+                    <div class="spinner"></div>
+                    <span>Loading albums...</span>
+                  </div>
+                } @else {
+                  <div class="albums-grid">
+                    <div class="album-card album-card--create" (click)="createAlbum()">
+                      <div class="album-cover album-cover--create">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </div>
+                      <div class="album-info">
+                        <h3 class="album-name">New Album</h3>
+                        <div class="album-meta">
+                          <span>Create a new album</span>
+                        </div>
+                      </div>
+                    </div>
+                    @for (album of albums(); track album.id) {
+                      <div class="album-card" [class.album-card--uploading]="uploadService.isUploading(album.id)" (click)="navigateToAlbum(album)">
+                        <div class="album-cover">
+                          @if (getCoverUrl(album)) {
+                            <img [src]="getCoverUrl(album)" alt="{{ album.name }}" [title]="album.name" />
+                          } @else {
+                            <div class="album-cover-placeholder">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="m21 15-5-5L5 21" />
+                              </svg>
+                            </div>
+                          }
+                          @if (uploadService.isUploading(album.id)) {
+                            <div class="album-upload-overlay">
+                              <div class="album-upload-spinner"></div>
+                              <span class="album-upload-percent">{{ uploadService.getUploadPercent(album.id) }}%</span>
+                            </div>
+                          } @else if (album.isPublic) {
+                            <span class="album-badge album-badge--public">Public</span>
+                          } @else {
+                            <span class="album-badge album-badge--private">Private</span>
+                          }
+                          @if (!uploadService.isUploading(album.id)) {
+                            <button class="album-share-btn" title="Share album" (click)="openShareModal(album, $event)">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            </button>
+                            <button class="album-delete-btn" title="Delete album" (click)="deleteAlbum(album, $event)">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                          }
+                        </div>
+                        <div class="album-info">
+                          <h3 class="album-name">{{ album.name }}</h3>
+                          <div class="album-meta">
+                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                            <span class="album-meta-dot">&middot;</span>
+                            <span>{{ formatSize(album.size) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Slide 2: Shared with me -->
+              <div class="albums-slide">
+                @if (sharedAlbumsLoading()) {
+                  <div class="albums-loading">
+                    <div class="spinner"></div>
+                    <span>Loading shared albums...</span>
+                  </div>
+                } @else if (sharedAlbums().length === 0) {
+                  <p class="albums-empty">No albums have been shared with you yet.</p>
+                } @else {
+                  <div class="albums-grid">
+                    @for (album of sharedAlbums(); track album.id) {
+                      <div class="album-card" (click)="navigateToAlbum(album)">
+                        <div class="album-cover">
+                          @if (getSharedCoverUrl(album)) {
+                            <img [src]="getSharedCoverUrl(album)" alt="{{ album.name }}" [title]="album.name" />
+                          } @else {
+                            <div class="album-cover-placeholder">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="m21 15-5-5L5 21" />
+                              </svg>
+                            </div>
+                          }
+                          <span class="album-badge album-badge--shared">Shared</span>
+                        </div>
+                        <div class="album-info">
+                          <h3 class="album-name">{{ album.name }}</h3>
+                          <div class="album-meta">
+                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                            @if (album.ownerName) {
+                              <span class="album-meta-dot">&middot;</span>
+                              <span>by {{ album.ownerName }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+            </div>
           </div>
-        } @else if (!isOwnProfile() && albums().length === 0) {
-          <p class="albums-empty">No albums yet.</p>
+
         } @else {
-          <div class="albums-grid">
-            @if (isOwnProfile()) {
-              <div class="album-card album-card--create" (click)="createAlbum()">
-                <div class="album-cover album-cover--create">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </div>
-                <div class="album-info">
-                  <h3 class="album-name">New Album</h3>
-                  <div class="album-meta">
-                    <span>Create a new album</span>
+          <!-- Public albums (other user's profile, no slider) -->
+          <h2 class="albums-title">Public Albums</h2>
+          @if (albumsLoading()) {
+            <div class="albums-loading">
+              <div class="spinner"></div>
+              <span>Loading albums...</span>
+            </div>
+          } @else if (albums().length === 0) {
+            <p class="albums-empty">No albums yet.</p>
+          } @else {
+            <div class="albums-grid">
+              @for (album of albums(); track album.id) {
+                <div class="album-card" (click)="navigateToAlbum(album)">
+                  <div class="album-cover">
+                    @if (getCoverUrl(album)) {
+                      <img [src]="getCoverUrl(album)" alt="{{ album.name }}" [title]="album.name" />
+                    } @else {
+                      <div class="album-cover-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path d="m21 15-5-5L5 21" />
+                        </svg>
+                      </div>
+                    }
+                    @if (album.isPublic) {
+                      <span class="album-badge album-badge--public">Public</span>
+                    } @else {
+                      <span class="album-badge album-badge--private">Private</span>
+                    }
+                  </div>
+                  <div class="album-info">
+                    <h3 class="album-name">{{ album.name }}</h3>
+                    <div class="album-meta">
+                      <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                      <span class="album-meta-dot">&middot;</span>
+                      <span>{{ formatSize(album.size) }}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-            @for (album of albums(); track album.id) {
-              <div class="album-card" [class.album-card--uploading]="uploadService.isUploading(album.id)" (click)="navigateToAlbum(album)">
-                <div class="album-cover">
-                  @if (getCoverUrl(album)) {
-                    <img [src]="getCoverUrl(album)" alt="{{ album.name }}" [title]="album.name" />
-                  } @else {
-                    <div class="album-cover-placeholder">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                        <path d="m21 15-5-5L5 21" />
-                      </svg>
-                    </div>
-                  }
-                  @if (uploadService.isUploading(album.id)) {
-                    <div class="album-upload-overlay">
-                      <div class="album-upload-spinner"></div>
-                      <span class="album-upload-percent">{{ uploadService.getUploadPercent(album.id) }}%</span>
-                    </div>
-                  } @else if (album.isPublic) {
-                    <span class="album-badge album-badge--public">Public</span>
-                  } @else {
-                    <span class="album-badge album-badge--private">Private</span>
-                  }
-                  @if (isOwnProfile() && !uploadService.isUploading(album.id)) {
-                    <button class="album-delete-btn" title="Delete album" (click)="deleteAlbum(album, $event)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  }
-                </div>
-                <div class="album-info">
-                  <h3 class="album-name">{{ album.name }}</h3>
-                  <div class="album-meta">
-                    <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
-                    <span class="album-meta-dot">&middot;</span>
-                    <span>{{ formatSize(album.size) }}</span>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         }
       </div>
     </div>
@@ -164,13 +266,17 @@
         <div class="form-group">
           <label for="newPass">New Password</label>
           <input id="newPass" type="password" [(ngModel)]="newPassword" name="newPassword" required />
+          <app-password-strength [password]="newPassword" (valid)="newPasswordValid = $event"></app-password-strength>
         </div>
         <div class="form-group">
           <label for="confPass">Confirm New Password</label>
           <input id="confPass" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
         </div>
+        @if (currentPassword && newPassword && currentPassword === newPassword) {
+          <div class="msg msg--error">Az új jelszó nem egyezhet a jelenlegi jelszóval.</div>
+        }
         <div class="modal-actions">
-          <button class="btn btn--primary" type="submit">Update Password</button>
+          <button class="btn btn--primary" type="submit" [disabled]="!isChangePasswordValid">Update Password</button>
           <button class="btn btn--secondary" type="button" (click)="toggleChangePassword()">Cancel</button>
         </div>
       </form>
@@ -287,5 +393,14 @@
 
 <!-- Toast -->
 @if (toastMessage()) {
-  <div class="toast">{{ toastMessage() }}</div>
+  <div class="toast toast--success">{{ toastMessage() }}</div>
+}
+
+<!-- Share Album Modal -->
+@if (sharingAlbum(); as album) {
+  <app-share-album-modal
+    [albumId]="album.id"
+    [albumName]="album.name"
+    (closed)="closeShareModal()"
+  />
 }

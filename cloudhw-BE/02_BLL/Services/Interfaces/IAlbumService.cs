@@ -9,6 +9,7 @@ public interface IAlbumService
     Task<List<AlbumSummary>> GetMyAlbumsAsync(string userId);
     Task<List<AlbumSummary>> GetPublicAlbumsAsync();
     Task<List<AlbumSummary>> GetSharedWithMeAsync(string userId);
+    Task<List<AlbumSummary>> SearchAlbumsAsync(string query, string userId);
     Task<Album> CreateAlbumAsync(string name, string? description, bool isPublic, string ownerId);
     Task<Album?> UpdateAlbumAsync(Guid id, string name, string? description, bool isPublic, string ownerId);
     Task<bool> DeleteAlbumAsync(Guid id, string ownerId);

@@ -1,0 +1,27 @@
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# .NET build outputs (root-level safety net)
+bin/
+obj/
+
+# Launch settings (contains local dev secrets)
+**/Properties/launchSettings.json
+
+# Node
+node_modules/
+
+# Docker override (may contain local secrets)
+docker-compose.override.yml

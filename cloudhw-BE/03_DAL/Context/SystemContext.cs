@@ -2,58 +2,91 @@
 public class SystemContext : ISystemContext
 {
     //POSTGRES
-    public string POSTGRES_HOST { get; set; }
-    public string POSTGRES_PORT { get; set; }
-    public string POSTGRES_USER { get; set; }
-    public string POSTGRES_PASSWORD { get; set; }
-    public string POSTGRES_DB { get; set; }
+    public string POSTGRES_HOST { get; set; } = "";
+    public string POSTGRES_PORT { get; set; } = "";
+    public string POSTGRES_USER { get; set; } = "";
+    public string POSTGRES_PASSWORD { get; set; } = "";
+    public string POSTGRES_DB { get; set; } = "";
 
     //JWT
-    public string JWT_ISSUER { get; set; }
-    public string JWT_AUDIANCE { get; set; }
-    public string JWT_KEY { get; set; }
+    public string JWT_ISSUER { get; set; } = "";
+    public string JWT_AUDIANCE { get; set; } = "";
+    public string JWT_KEY { get; set; } = "";
 
     //ADMIN USER
-    public string ADMIN_EMAIL { get; set; }
-    public string ADMIN_PASSWORD { get; set; }
-    public string ADMIN_NAME { get; set; }
+    public string ADMIN_EMAIL { get; set; } = "";
+    public string ADMIN_PASSWORD { get; set; } = "";
+    public string ADMIN_NAME { get; set; } = "";
+
+    //SMTP (Email)
+    public string SMTP_HOST { get; set; } = "";
+    public string SMTP_PORT { get; set; } = "";
+    public string SMTP_USER { get; set; } = "";
+    public string SMTP_PASSWORD { get; set; } = "";
+    public string SMTP_FROM { get; set; } = "";
+
+    //FRONTEND
+    public string FRONTEND_URL { get; set; } = "";
 
     //QDRANT
-    public string QDRANT_URL { get; set; }
+    public string QDRANT_URL { get; set; } = "";
 
     //API KEYS
-    public string OPENAI_APIKEY { get; set; }
+    public string OPENAI_APIKEY { get; set; } = "";
 
     public SystemContext()
     {
         SetContextDefaults();
         SetContextFromEnv();
+        ValidateRequired();
     }
 
     public void SetContextDefaults()
     {
-        //POSTGRES
-        POSTGRES_HOST = "localhost";
-        POSTGRES_PORT = "5435";
-        POSTGRES_USER = "postgres";
-        POSTGRES_PASSWORD = "example";
-        POSTGRES_DB = "cloudhw-db";
+        //POSTGRES – real values come from environment variables / .env
+        POSTGRES_HOST = "";
+        POSTGRES_PORT = "5432";
+        POSTGRES_USER = "";
+        POSTGRES_PASSWORD = "";
+        POSTGRES_DB = "";
 
-        //JWT
-        JWT_ISSUER = "CloudHW";
-        JWT_AUDIANCE = "CloudHW User";
-        JWT_KEY = "SHFzdnmcgd648°^šdcaa##y<UIHDpfgkmvzdf792kaskdjmvkahflélogpőádehatz";
+        //JWT – MUST be set via environment variables
+        JWT_ISSUER = "";
+        JWT_AUDIANCE = "";
+        JWT_KEY = "";
 
-        //ADMIN USER
-        ADMIN_EMAIL = "cloudhw@cloudhw.com";
-        ADMIN_PASSWORD = "Admin123";
-        ADMIN_NAME = "cloudhw";
+        //ADMIN USER – MUST be set via environment variables
+        ADMIN_EMAIL = "";
+        ADMIN_PASSWORD = "";
+        ADMIN_NAME = "";
 
-        //QDRANT
-        QDRANT_URL = "http://localhost:8000";
+        //SMTP – optional for local dev (falls back to console logging)
+        SMTP_HOST = "";
+        SMTP_PORT = "587";
+        SMTP_USER = "";
+        SMTP_PASSWORD = "";
+        SMTP_FROM = "";
 
-        //API KEYS
-        OPENAI_APIKEY = "";
+        //FRONTEND
+        FRONTEND_URL = "http://localhost:4200";
+    }
+
+    /// <summary>Throws if any required secret is still empty after env-var loading.</summary>
+    public void ValidateRequired()
+    {
+        var missing = new List<string>();
+        if (string.IsNullOrWhiteSpace(POSTGRES_HOST)) missing.Add(nameof(POSTGRES_HOST));
+        if (string.IsNullOrWhiteSpace(POSTGRES_USER)) missing.Add(nameof(POSTGRES_USER));
+        if (string.IsNullOrWhiteSpace(POSTGRES_PASSWORD)) missing.Add(nameof(POSTGRES_PASSWORD));
+        if (string.IsNullOrWhiteSpace(POSTGRES_DB)) missing.Add(nameof(POSTGRES_DB));
+        if (string.IsNullOrWhiteSpace(JWT_KEY)) missing.Add(nameof(JWT_KEY));
+        if (string.IsNullOrWhiteSpace(ADMIN_EMAIL)) missing.Add(nameof(ADMIN_EMAIL));
+        if (string.IsNullOrWhiteSpace(ADMIN_PASSWORD)) missing.Add(nameof(ADMIN_PASSWORD));
+
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                $"Missing required environment variables: {string.Join(", ", missing)}. " +
+                "Set them via OS environment variables or a .env file.");
     }
 
     public void SetContextFromEnv()
@@ -75,11 +108,15 @@ public class SystemContext : ISystemContext
         SetForEnvIfNotNullOrEmpty(nameof(ADMIN_PASSWORD));
         SetForEnvIfNotNullOrEmpty(nameof(ADMIN_NAME));
 
-        //QDRANT
-        SetForEnvIfNotNullOrEmpty(nameof(QDRANT_URL));
+        //SMTP
+        SetForEnvIfNotNullOrEmpty(nameof(SMTP_HOST));
+        SetForEnvIfNotNullOrEmpty(nameof(SMTP_PORT));
+        SetForEnvIfNotNullOrEmpty(nameof(SMTP_USER));
+        SetForEnvIfNotNullOrEmpty(nameof(SMTP_PASSWORD));
+        SetForEnvIfNotNullOrEmpty(nameof(SMTP_FROM));
 
-        //API KEYS
-        SetForEnvIfNotNullOrEmpty(nameof(OPENAI_APIKEY));
+        //FRONTEND
+        SetForEnvIfNotNullOrEmpty(nameof(FRONTEND_URL));
     }
 
     public void SetValueByName(string name, string value)
@@ -104,6 +141,14 @@ public class SystemContext : ISystemContext
                 case nameof(ADMIN_PASSWORD): ADMIN_PASSWORD = value; break;
                 case nameof(ADMIN_NAME): ADMIN_NAME = value; break;
 
+                case nameof(SMTP_HOST): SMTP_HOST = value; break;
+                case nameof(SMTP_PORT): SMTP_PORT = value; break;
+                case nameof(SMTP_USER): SMTP_USER = value; break;
+                case nameof(SMTP_PASSWORD): SMTP_PASSWORD = value; break;
+                case nameof(SMTP_FROM): SMTP_FROM = value; break;
+
+                case nameof(FRONTEND_URL): FRONTEND_URL = value; break;
+
                 case nameof(OPENAI_APIKEY): OPENAI_APIKEY = value; break;
             }
         }
@@ -118,6 +163,13 @@ public class SystemContext : ISystemContext
 
     public string GetConnectionString()
     {
-        return "Host=" + POSTGRES_HOST + ":" + POSTGRES_PORT + ";Username=" + POSTGRES_USER + ";Password=" + POSTGRES_PASSWORD + ";Database=" + POSTGRES_DB + ";Include Error Detail= true";
+        var connStr = "Host=" + POSTGRES_HOST + ":" + POSTGRES_PORT + ";Username=" + POSTGRES_USER + ";Password=" + POSTGRES_PASSWORD + ";Database=" + POSTGRES_DB;
+
+        // Only include detailed error info in development
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase))
+            connStr += ";Include Error Detail=true";
+
+        return connStr;
     }
 }

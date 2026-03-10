@@ -18,5 +18,6 @@ public static class ServicesSetup
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IAlbumService, AlbumService>();
         builder.Services.AddScoped<IPictureService, PictureService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
     }
 }

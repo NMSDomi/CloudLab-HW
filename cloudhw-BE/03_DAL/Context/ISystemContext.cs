@@ -19,5 +19,15 @@ public interface ISystemContext
     public string ADMIN_PASSWORD { get; set; }
     public string ADMIN_NAME { get; set; }
 
+    //SMTP (Email)
+    public string SMTP_HOST { get; set; }
+    public string SMTP_PORT { get; set; }
+    public string SMTP_USER { get; set; }
+    public string SMTP_PASSWORD { get; set; }
+    public string SMTP_FROM { get; set; }
+
+    //FRONTEND
+    public string FRONTEND_URL { get; set; }
+
     string GetConnectionString();
 }

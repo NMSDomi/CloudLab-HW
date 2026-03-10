@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Picture } from '../04_models/picture.model';
+import { Picture, ThumbnailResult } from '../04_models/picture.model';
 import { environmentUrls } from '../../enviroment/enviroment';
 
 @Injectable({ providedIn: 'root' })
@@ -12,8 +12,8 @@ export class PictureService {
     return this.http.get<Picture[]>(`${environmentUrls.pictures}/album/${albumId}`);
   }
 
-  getAlbumThumbnails(albumId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${environmentUrls.pictures}/album/${albumId}/thumbnails`);
+  getAlbumThumbnails(albumId: string): Observable<ThumbnailResult[]> {
+    return this.http.get<ThumbnailResult[]>(`${environmentUrls.pictures}/album/${albumId}/thumbnails`);
   }
 
   getPicture(id: string): Observable<Picture> {
@@ -42,5 +42,11 @@ export class PictureService {
 
   getDataUrl(pictureId: string): string {
     return `${environmentUrls.pictures}/${pictureId}/data`;
+  }
+
+  getPictureBlob(id: string): Observable<Blob> {
+    return this.http.get(`${environmentUrls.pictures}/${id}/data`, {
+      responseType: 'blob'
+    });
   }
 }

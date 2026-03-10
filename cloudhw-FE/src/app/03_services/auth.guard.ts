@@ -16,31 +16,25 @@ export class AuthGuard implements CanActivate {
   canActivate(): Observable<boolean> {
     const token = this.userService.getToken();
 
+    // APP_INITIALIZER already refreshed, so if we have a valid token, just verify the user.
     if (token && !this.userService.isTokenExpired(token)) {
-      // Token is valid, try to get user info
+      if (this.userService.getCurrentUser()) return of(true);
       return this.userService.getMe(false).pipe(
         map(() => true),
         catchError(() => of(true))
       );
     }
 
-    const refreshToken = this.userService.getRefreshToken();
-    if (refreshToken) {
-      return this.userService.refreshToken().pipe(
-        switchMap(() => this.userService.getMe(false)),
-        map(() => true),
-        catchError(() => {
-          this.userService.logout();
-          this.router.navigate(['/login']);
-          return of(false);
-        })
-      );
-    }
-
-    // No valid token - redirect to login
-    this.userService.logout();
-    this.router.navigate(['/login']);
-    return of(false);
+    // Token expired mid-session (not page reload) — attempt refresh.
+    return this.userService.refreshToken().pipe(
+      switchMap(() => this.userService.getMe(false)),
+      map(() => true),
+      catchError(() => {
+        this.userService.clearInMemoryAuth();
+        this.router.navigate(['/login']);
+        return of(false);
+      })
+    );
   }
 }
 

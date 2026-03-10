@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Album } from '../04_models/album.model';
 import { environmentUrls } from '../../enviroment/enviroment';
 
@@ -42,5 +42,27 @@ export class AlbumService {
 
   getCoverThumbnailUrl(albumId: string): string {
     return `${environmentUrls.albums}/${albumId}/cover`;
+  }
+
+  searchAlbums(query: string): Observable<Album[]> {
+    return this.http.get<Album[]>(`${environmentUrls.albums}/search`, { params: { q: query } });
+  }
+
+  shareAlbum(albumId: string, userId: string): Observable<void> {
+    return this.http.post<void>(`${environmentUrls.albums}/${albumId}/share`, { userId });
+  }
+
+  unshareAlbum(albumId: string, targetUserId: string): Observable<void> {
+    return this.http.delete<void>(`${environmentUrls.albums}/${albumId}/share/${encodeURIComponent(targetUserId)}`);
+  }
+
+  getAlbumShares(albumId: string): Observable<{ userId: string; userName: string; sharedAt: string }[]> {
+    return this.http.get<any>(`${environmentUrls.albums}/${albumId}`).pipe(
+      map((album: any) => (album.SharedWith ?? album.sharedWith ?? []).map((s: any) => ({
+        userId: s.UserId ?? s.userId,
+        userName: s.UserName ?? s.userName,
+        sharedAt: s.SharedAt ?? s.sharedAt
+      })))
+    );
   }
 }

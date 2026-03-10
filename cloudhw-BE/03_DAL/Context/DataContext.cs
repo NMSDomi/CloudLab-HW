@@ -45,7 +45,10 @@ public class DataContext(
             e.HasKey(p => p.Id);
 
             e.Property(p => p.CreatedAt)
-             .HasPrecision(0); // no seconds
+             .HasPrecision(0);
+
+            e.Property(p => p.UploadedAt)
+             .HasPrecision(0);
 
             e.HasOne(p => p.Album)
              .WithMany(a => a.Pictures)

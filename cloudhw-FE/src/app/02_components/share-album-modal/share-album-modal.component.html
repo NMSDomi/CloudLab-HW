@@ -1,0 +1,97 @@
+<div class="share-backdrop" (click)="close()">
+  <div class="share-card" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="share-header">
+      <div class="share-header-text">
+        <h2 class="share-title">Share Album</h2>
+        <span class="share-album-name">"{{ albumName }}"</span>
+      </div>
+      <button class="share-close" (click)="close()" title="Close">&times;</button>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="share-error">{{ errorMessage() }}</div>
+    }
+
+    <!-- Search input -->
+    <div class="share-search-wrap">
+      <svg class="share-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        class="share-search-input"
+        type="text"
+        placeholder="Search by name or email..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput()"
+        autocomplete="off" />
+      @if (searching()) {
+        <div class="share-search-spinner spinner spinner--sm"></div>
+      }
+    </div>
+
+    <!-- Search results -->
+    @if (searchResults().length > 0) {
+      <ul class="share-results">
+        @for (user of searchResults(); track user.id) {
+          <li class="share-result-item" (click)="addUser(user)">
+            <div class="share-user-avatar">{{ user.name[0].toUpperCase() }}</div>
+            <div class="share-user-info">
+              <span class="share-user-name">{{ user.name }}</span>
+              <span class="share-user-email">{{ user.email }}</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="share-add-icon">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Staged users (to be added) -->
+    @if (selectedUsers().length > 0) {
+      <div class="share-section">
+        <span class="share-section-label">Will be added</span>
+        <div class="share-chips">
+          @for (user of selectedUsers(); track user.id) {
+            <div class="share-chip">
+              <span>{{ user.name }}</span>
+              <button class="chip-remove" (click)="removeSelected(user.id)" title="Remove">&times;</button>
+            </div>
+          }
+        </div>
+      </div>
+      <button class="btn-share" (click)="saveShares()" [disabled]="saving()">
+        @if (saving()) { <span class="spinner spinner--sm"></span> }
+        Share with {{ selectedUsers().length }} {{ selectedUsers().length === 1 ? 'person' : 'people' }}
+      </button>
+    }
+
+    <!-- Currently shared with -->
+    <div class="share-section">
+      <span class="share-section-label">Shared with</span>
+      @if (sharesLoading()) {
+        <div class="share-loading"><div class="spinner spinner--sm"></div></div>
+      } @else if (currentShares().length === 0) {
+        <p class="share-empty">Not shared with anyone yet.</p>
+      } @else {
+        <ul class="share-current-list">
+          @for (share of currentShares(); track share.userId) {
+            <li class="share-current-item">
+              <div class="share-user-avatar share-user-avatar--sm">{{ share.userName[0].toUpperCase() }}</div>
+              <span class="share-user-name">{{ share.userName }}</span>
+              <button class="share-remove-btn" (click)="removeShare(share.userId)" title="Remove access">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+  </div>
+</div>

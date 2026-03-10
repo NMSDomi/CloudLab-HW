@@ -2,6 +2,7 @@ import { Component, computed, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../03_services/user.service';
+import { GlobalSearchService } from '../../03_services/global-search.service';
 
 @Component({
   selector: 'app-header',
@@ -13,6 +14,11 @@ import { UserService } from '../../03_services/user.service';
 export class HeaderComponent {
   private userService = inject(UserService);
   private router = inject(Router);
+  private searchService = inject(GlobalSearchService);
+
+  readonly isMac = navigator.platform.toUpperCase().includes('MAC') ||
+    navigator.userAgent.toUpperCase().includes('MAC');
+  readonly searchShortcut = this.isMac ? '⌘K' : 'Ctrl+K';
 
   dropdownOpen = false;
 
@@ -33,6 +39,10 @@ export class HeaderComponent {
 
   onUpload() {
     this.uploadClicked.emit();
+  }
+
+  openSearch() {
+    this.searchService.open();
   }
 
   onLogin() {
