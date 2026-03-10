@@ -50,7 +50,6 @@ jobs:
       - name: Deploy BE to App Engine
         run: |
           gcloud app deploy cloudhw-BE/app.rendered.yaml \
-            --image-url=${{ needs.build-and-push.outputs.be-gcr-image }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
 
@@ -63,28 +62,5 @@ jobs:
       - name: Deploy FE to App Engine
         run: |
           gcloud app deploy cloudhw-FE/app.rendered.yaml \
-            --project=${{ secrets.GCP_PROJECT_ID }} \
-            --quiet
-
-      # ── Backend –────────────
-      - name: Render BE app.yaml
-        env:
-          POSTGRES_HOST:                ${{ secrets.POSTGRES_HOST }}
-          POSTGRES_USER:                ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD:            ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB:                  ${{ secrets.POSTGRES_DB }}
-          JWT_ISSUER:                   ${{ secrets.JWT_ISSUER }}
-          JWT_AUDIANCE:                 ${{ secrets.JWT_AUDIANCE }}
-          JWT_KEY:                      ${{ secrets.JWT_KEY }}
-          ADMIN_EMAIL:                  ${{ secrets.ADMIN_EMAIL }}
-          ADMIN_PASSWORD:               ${{ secrets.ADMIN_PASSWORD }}
-          ADMIN_NAME:                   ${{ secrets.ADMIN_NAME }}
-          FRONTEND_URL:                 ${{ secrets.FRONTEND_URL }}
-          GCP_CLOUDSQL_CONNECTION_NAME: ${{ secrets.GCP_CLOUDSQL_CONNECTION_NAME }}
-        run: envsubst < cloudhw-BE/app.yaml > cloudhw-BE/app.rendered.yaml
-
-      - name: Deploy BE to App Engine
-        run: |
-          gcloud app deploy cloudhw-BE/app.rendered.yaml \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
