@@ -210,7 +210,15 @@ public class UserController(
                 return BadRequest(new { message = "Ez az email cím már használatban van." });
 
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, model.Email);
-            await _emailService.SendChangeEmailConfirmationAsync(user.Email!, model.Email, user.Id, token);
+            try
+            {
+                await _emailService.SendChangeEmailConfirmationAsync(user.Email!, model.Email, user.Id, token);
+            }
+            catch (Exception ex)
+            {
+                var logger = HttpContext.RequestServices.GetRequiredService<ILogger<UserController>>();
+                logger.LogError(ex, "Failed to send change-email confirmation to {Email}", model.Email);
+            }
 
             var nameResult = await _userManager.UpdateAsync(user);
             if (!nameResult.Succeeded) return BadRequest(nameResult.Errors);
@@ -265,9 +273,18 @@ public class UserController(
 
         await _userManager.AddToRoleAsync(user, RoleNames.Editor);
 
-        // Generate email confirmation token and send email
+        // Generate email confirmation token and send email.
+        // Email failure must not roll back the registration — user is already created.
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        await _emailService.SendConfirmationEmailAsync(user.Email!, user.Id, token);
+        try
+        {
+            await _emailService.SendConfirmationEmailAsync(user.Email!, user.Id, token);
+        }
+        catch (Exception ex)
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<UserController>>();
+            logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+        }
 
         return Ok(new { message = "Sikeres regisztráció. Kérjük, erősítsd meg az email címedet a kiküldött linkre kattintva." });
     }
@@ -301,7 +318,15 @@ public class UserController(
             return Ok(new { message = "Ha az email cím regisztrálva van, küldtünk egy új megerősítő levelet." });
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        await _emailService.SendConfirmationEmailAsync(user.Email!, user.Id, token);
+        try
+        {
+            await _emailService.SendConfirmationEmailAsync(user.Email!, user.Id, token);
+        }
+        catch (Exception ex)
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<UserController>>();
+            logger.LogError(ex, "Failed to send confirmation email to {Email}", user.Email);
+        }
 
         return Ok(new { message = "Ha az email cím regisztrálva van, küldtünk egy új megerősítő levelet." });
     }
@@ -317,7 +342,15 @@ public class UserController(
             return Ok(new { message = "Ha az email cím regisztrálva van, küldtünk egy jelszó visszaállító levelet." });
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        await _emailService.SendPasswordResetEmailAsync(user.Email!, token);
+        try
+        {
+            await _emailService.SendPasswordResetEmailAsync(user.Email!, token);
+        }
+        catch (Exception ex)
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<UserController>>();
+            logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+        }
 
         return Ok(new { message = "Ha az email cím regisztrálva van, küldtünk egy jelszó visszaállító levelet." });
     }

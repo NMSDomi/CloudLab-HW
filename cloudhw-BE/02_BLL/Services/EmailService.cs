@@ -1,6 +1,7 @@
 using cloudhw_BE.BLL.Services.Interfaces;
 using cloudhw_BE.DAL.Context;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 
 namespace cloudhw_BE.BLL.Services;
@@ -26,9 +27,14 @@ public class EmailService(ISystemContext systemContext, ILogger<EmailService> lo
 
         using var client = new SmtpClient();
         var port = int.Parse(systemContext.SMTP_PORT);
-        var useSsl = port == 465;
+        var socketOptions = port switch
+        {
+            465 => SecureSocketOptions.SslOnConnect,
+            587 => SecureSocketOptions.StartTls,
+            _   => SecureSocketOptions.Auto
+        };
 
-        await client.ConnectAsync(systemContext.SMTP_HOST, port, useSsl);
+        await client.ConnectAsync(systemContext.SMTP_HOST, port, socketOptions);
 
         // Only authenticate if credentials are provided
         if (!string.IsNullOrWhiteSpace(systemContext.SMTP_USER))
