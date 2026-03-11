@@ -1,10 +1,6 @@
-runtime: aspnetcore
+runtime: custom
 env: flex
 service: api
-
-runtime_config:
-  operating_system: "ubuntu22"
-  runtime_version: "8"
 
 beta_settings:
   cloud_sql_instances: "${GCP_CLOUDSQL_CONNECTION_NAME}"
@@ -32,7 +28,6 @@ env_variables:
   ADMIN_NAME: "${ADMIN_NAME}"
   FRONTEND_URL: "${FRONTEND_URL}"
   ASPNETCORE_AllowedHosts: "${ASPNETCORE_AllowedHosts}"
-  # SMTP – leave empty to fall back to console logging
   SMTP_HOST: "${SMTP_HOST}"
   SMTP_PORT: "${SMTP_PORT}"
   SMTP_USER: "${SMTP_USER}"
