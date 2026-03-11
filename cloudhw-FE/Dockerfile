@@ -12,7 +12,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 COPY --from=build /usr/src/app/dist/cloudhw-fe/browser /usr/share/nginx/html
 COPY --from=build /usr/src/app/src/assets/env.template.js /usr/share/nginx/html/assets/env.template.js
 
-EXPOSE 80
+EXPOSE 8080
 # At startup:
 #  1. Substitute only ${BACKEND_URL} in the nginx config template (leaves nginx's own $variables intact)
 #  2. Write env.js for the Angular app (always uses '/' — nginx handles the proxy)

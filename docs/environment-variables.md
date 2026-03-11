@@ -20,7 +20,7 @@ This document describes all environment variables used in the project, where the
 | `ADMIN_PASSWORD` | Backend | Seed admin account password |
 | `ADMIN_NAME` | Backend | Seed admin display name |
 | `FRONTEND_URL` | Backend | Allowed CORS origin |
-| `ASPNETCORE_AllowedHosts` | Backend | Host-header allowlist (e.g. `your-api.appspot.com`) |
+| `ASPNETCORE_AllowedHosts` | Backend | ~~Host-header allowlist~~ — set to `*` in `appsettings.json`; this env var is no longer needed and has no effect unless explicitly set to override | // TODO
 | `BACKEND_URL` | Frontend | API base URL used by the browser |
 | `SMTP_HOST` | Backend | SMTP server host (leave empty to log emails to console) |
 | `SMTP_PORT` | Backend | SMTP server port (default `587`) |
@@ -31,7 +31,7 @@ This document describes all environment variables used in the project, where the
 | `PGADMIN_DEFAULT_PASSWORD` | pgAdmin | pgAdmin login password |
 | `GCP_SA_KEY` | CI/CD | Google Cloud service account JSON key |
 | `GCP_PROJECT_ID` | CI/CD | Google Cloud project ID |
-| `GCP_CLOUDSQL_CONNECTION_NAME` | Backend (GCP) | Cloud SQL instance connection name |
+| `GCP_CLOUDSQL_CONNECTION_NAME` | Backend (GCP) | Cloud SQL instance connection name (e.g. `project:region:instance`) — used as the Unix socket path in `POSTGRES_HOST` |
 
 ---
 

@@ -9,7 +9,7 @@ This document describes the overall structure and design of the backend and fron
 ```
 CloudLab-HW/
   cloudhw-BE/          ← .NET 8 Web API
-  cloudhw-FE/          ← Angular 17+ SPA
+  cloudhw-FE/          ← Angular 19+ SPA
   docker-compose.cloudhw.yml    ← full stack (production-like)
   docker-compose.development.yml ← infra only (DB + pgAdmin)
   .env.example         ← environment variable template
@@ -77,10 +77,11 @@ There is no `appsettings.json`-based config for secrets — all secrets come fro
 1. Register ISystemContext (validates required env vars — throws if missing)
 2. Register controllers, auth, swagger, services, database, CORS
 3. Build app
-4. ApplyMigrationsAsync()   ← runs any pending EF Core migrations
-5. UseRoleSeedAsync()       ← seeds Admin/Editor roles and admin user
-6. Configure middleware pipeline
-7. app.Run()
+4. Background task launched (non-blocking — allows health checks to pass immediately):
+   a. ApplyMigrationsAsync()   ← runs any pending EF Core migrations
+   b. UseRoleSeedAsync()       ← seeds Admin/Editor roles and admin user
+5. Configure middleware pipeline
+6. app.Run()
 ```
 
 ### Database
@@ -90,6 +91,7 @@ There is no `appsettings.json`-based config for secrets — all secrets come fro
 - Additional tables: `Albums`, `Pictures`, `AlbumShares`
 - Pictures stored as `byte[]` columns (full image + thumbnail) — no file system storage
 - Migrations in `08_Migrations/`, applied automatically at startup
+- **Connection string**: built by `SystemContext.GetConnectionString()` using separate `Host` and `Port` parameters. On Cloud SQL (App Engine), `POSTGRES_HOST` is a Unix socket path (`/cloudsql/...`) — the port must remain a separate parameter, not appended to the host path.
 
 ### Authentication
 

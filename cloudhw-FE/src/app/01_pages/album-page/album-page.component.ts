@@ -538,7 +538,11 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const selected: SelectedFile[] = files
       .filter(f => f.type.startsWith('image/'))
-      .map(f => ({ file: f, preview: URL.createObjectURL(f), name: f.name, size: f.size }));
+      .map(f => {
+        const trimmedName = this.trimPictureName(f.name);
+        const file = trimmedName !== f.name ? new File([f], trimmedName, { type: f.type }) : f;
+        return { file, preview: URL.createObjectURL(f), name: trimmedName, size: f.size };
+      });
 
     if (selected.length === 0) return;
 
@@ -558,6 +562,15 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
   trimName(name: string): string {
     const dot = name.lastIndexOf('.');
     return dot > 0 ? name.substring(0, dot) : name;
+  }
+
+  /** Trims the base name (without extension) to 40 characters. */
+  private trimPictureName(name: string, max = 40): string {
+    const dot = name.lastIndexOf('.');
+    if (dot <= 0) return name.length > max ? name.substring(0, max) : name;
+    const base = name.substring(0, dot);
+    const ext  = name.substring(dot);
+    return (base.length > max ? base.substring(0, max) : base) + ext;
   }
 
   openLightbox(pic: Picture): void {

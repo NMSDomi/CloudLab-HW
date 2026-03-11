@@ -23,12 +23,13 @@ public class PictureController(
         {
             p.Id,
             p.Name,
-            p.CreatedAt,            p.UploadedAt,            p.Size,
+            p.CreatedAt,
+            p.UploadedAt,
+            p.Size,
             p.ContentType,
             p.Width,
             p.Height,
-            p.AlbumId,
-            p.Thumbnail
+            p.AlbumId
         }));
     }
 

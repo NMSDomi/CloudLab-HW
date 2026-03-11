@@ -39,13 +39,12 @@ namespace Backend.Setup
 
         public static void ConfigureSwagger(this WebApplication app)
         {
+            // Only expose Swagger in Development — never in production.
             if (app.Environment.IsDevelopment())
             {
-                
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
-
-            app.UseSwagger();
-            app.UseSwaggerUI();
         }
 
         private static string SchemaIdStrategy(Type currentClass)

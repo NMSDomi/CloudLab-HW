@@ -83,7 +83,8 @@ export class UploadService {
         if (i === coverIndex && pic) {
           coverPictureId = pic.id;
         }
-      } catch {
+      } catch (err) {
+        console.error(`Failed to upload "${files[i].name}":`, err);
         // Continue uploading remaining files even if one fails
       }
       this.activeUpload.set({
