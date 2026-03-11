@@ -10,7 +10,7 @@ public class EmailService(ISystemContext systemContext, ILogger<EmailService> lo
     public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
     {
         // If SMTP is not configured, log the email to console (useful for local development)
-        if (string.IsNullOrWhiteSpace(systemContext.SMTP_HOST))
+        if (string.IsNullOrWhiteSpace(systemContext.SMTP_HOST) || string.IsNullOrWhiteSpace(systemContext.SMTP_FROM))
         {
             logger.LogWarning(
                 "SMTP not configured — email not sent.\n  To: {To}\n  Subject: {Subject}\n  Body:\n{Body}",
@@ -19,8 +19,8 @@ public class EmailService(ISystemContext systemContext, ILogger<EmailService> lo
         }
 
         var message = new MimeMessage();
-        message.From.Add(MailboxAddress.Parse(systemContext.SMTP_FROM));
-        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.From.Add(MailboxAddress.Parse(systemContext.SMTP_FROM.Trim()));
+        message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
         message.Subject = subject;
         message.Body = new TextPart("html") { Text = htmlBody };
 

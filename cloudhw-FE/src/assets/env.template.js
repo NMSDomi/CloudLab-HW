@@ -1,4 +1,5 @@
 (function (window) {
     window['env'] = window['env'] || {};
-    window['env']['BACKEND_URL'] = '${BACKEND_URL}';
+    // Always use relative '/' — nginx proxies /api/* to the backend service.
+    window['env']['BACKEND_URL'] = '/';
 })(this);
