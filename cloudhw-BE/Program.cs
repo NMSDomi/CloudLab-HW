@@ -41,7 +41,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
