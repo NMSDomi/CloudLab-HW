@@ -13,8 +13,9 @@ public static class SeedExtensions
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var systemContext = scope.ServiceProvider.GetRequiredService<ISystemContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<RoleSeed>>();
 
-        var roleSeed = new RoleSeed(roleManager, userManager, systemContext);
+        var roleSeed = new RoleSeed(roleManager, userManager, systemContext, logger);
         await roleSeed.InstallAsync();
     }
 }

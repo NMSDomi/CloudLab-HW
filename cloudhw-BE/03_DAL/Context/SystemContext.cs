@@ -153,7 +153,11 @@ public class SystemContext : ISystemContext
 
     public string GetConnectionString()
     {
-        var connStr = "Host=" + POSTGRES_HOST + ":" + POSTGRES_PORT + ";Username=" + POSTGRES_USER + ";Password=" + POSTGRES_PASSWORD + ";Database=" + POSTGRES_DB;
+        // For Cloud SQL (App Engine), POSTGRES_HOST is a Unix socket path like
+        // /cloudsql/project:region:instance — port must be a separate parameter,
+        // NOT appended to the host (e.g. host:5432 produces an invalid socket path).
+        // For TCP (local/Docker), Host=hostname;Port=5432 also works correctly.
+        var connStr = $"Host={POSTGRES_HOST};Port={POSTGRES_PORT};Username={POSTGRES_USER};Password={POSTGRES_PASSWORD};Database={POSTGRES_DB}";
 
         // Only include detailed error info in development
         var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");

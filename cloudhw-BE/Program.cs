@@ -21,8 +21,25 @@ var app = builder.Build();
 // and App Engine Flex health checks can pass without timing out
 _ = Task.Run(async () =>
 {
-    await app.ApplyMigrationsAsync();
-    await app.UseRoleSeedAsync();
+    var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    try
+    {
+        await app.ApplyMigrationsAsync();
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogCritical(ex, "Migration failed");
+        return;
+    }
+
+    try
+    {
+        await app.UseRoleSeedAsync();
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogCritical(ex, "Role/user seed failed");
+    }
 });
 
 app.ConfigureSwagger();

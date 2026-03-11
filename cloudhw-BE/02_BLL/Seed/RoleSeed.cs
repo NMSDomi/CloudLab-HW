@@ -7,7 +7,8 @@ namespace cloudhw_BE.BLL.Seed;
 public class RoleSeed(
     RoleManager<IdentityRole> _roleManager,
     UserManager<User> _userManager,
-    ISystemContext _systemContext
+    ISystemContext _systemContext,
+    ILogger<RoleSeed> _logger
     )
 {
     public async Task InstallAsync()
@@ -44,7 +45,17 @@ public class RoleSeed(
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, RoleNames.Admin);
+                _logger.LogInformation("Admin user created: {Email}", _systemContext.ADMIN_EMAIL);
             }
+            else
+            {
+                _logger.LogCritical("Admin user creation failed: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}")));
+            }
+        }
+        else
+        {
+            _logger.LogInformation("Admin user already exists: {Email}", _systemContext.ADMIN_EMAIL);
         }
     }
 }
