@@ -88,7 +88,7 @@ jobs:
       - name: Deploy BE to App Engine
         run: |
           gcloud app deploy cloudhw-BE/app.rendered.yaml \
-            --image-url=${{ needs.build-and-push.outputs.be-image }} \
+            --image-url=gcr.io/${{ secrets.GCP_PROJECT_ID }}/cloudhw-be:${{ github.sha }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
 
@@ -101,6 +101,6 @@ jobs:
       - name: Deploy FE to App Engine
         run: |
           gcloud app deploy cloudhw-FE/app.rendered.yaml \
-            --image-url=${{ needs.build-and-push.outputs.fe-image }} \
+            --image-url=gcr.io/${{ secrets.GCP_PROJECT_ID }}/cloudhw-fe:${{ github.sha }} \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
