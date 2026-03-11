@@ -36,7 +36,8 @@ public class RoleSeed(
             {
                 UserName = _systemContext.ADMIN_EMAIL,
                 Email = _systemContext.ADMIN_EMAIL,
-                Name = _systemContext.ADMIN_NAME
+                Name = _systemContext.ADMIN_NAME,
+                EmailConfirmed = true
             };
 
             var result = await _userManager.CreateAsync(user, _systemContext.ADMIN_PASSWORD);

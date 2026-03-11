@@ -28,12 +28,6 @@ public class SystemContext : ISystemContext
     //FRONTEND
     public string FRONTEND_URL { get; set; } = "";
 
-    //QDRANT
-    public string QDRANT_URL { get; set; } = "";
-
-    //API KEYS
-    public string OPENAI_APIKEY { get; set; } = "";
-
     public SystemContext()
     {
         SetContextDefaults();
@@ -131,8 +125,6 @@ public class SystemContext : ISystemContext
                 case nameof(POSTGRES_PASSWORD): POSTGRES_PASSWORD = value; break;
                 case nameof(POSTGRES_DB): POSTGRES_DB = value; break;
 
-                case nameof(QDRANT_URL): QDRANT_URL = value; break;
-
                 case nameof(JWT_ISSUER): JWT_ISSUER = value; break;
                 case nameof(JWT_AUDIANCE): JWT_AUDIANCE = value; break;
                 case nameof(JWT_KEY): JWT_KEY = value; break;
@@ -148,8 +140,6 @@ public class SystemContext : ISystemContext
                 case nameof(SMTP_FROM): SMTP_FROM = value; break;
 
                 case nameof(FRONTEND_URL): FRONTEND_URL = value; break;
-
-                case nameof(OPENAI_APIKEY): OPENAI_APIKEY = value; break;
             }
         }
     }

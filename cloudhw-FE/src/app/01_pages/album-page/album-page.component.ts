@@ -8,7 +8,7 @@ import { UserService } from '../../03_services/user.service';
 import { UploadService, SelectedFile } from '../../03_services/upload.service';
 import { Album } from '../../04_models/album.model';
 import { Picture } from '../../04_models/picture.model';
-import { ShareAlbumModalComponent } from '../../02_components/share-album-modal/share-album-modal.component';
+import { ShareAlbumModalComponent } from "../../02_components/share-album-modal/share-album-modal.component";
 
 type SortField = 'name' | 'createdAt' | 'size';
 type SortDir = 'asc' | 'desc';
@@ -50,7 +50,9 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
   dragOver = signal(false);
   selectedFiles = signal<SelectedFile[]>([]);
   confirmingDelete = signal(false);
-  sharingAlbum = signal(false);
+
+  // Share album
+  sharingAlbum = signal<Album | null>(null);
 
   private unsubUploadComplete: (() => void) | null = null;
 
@@ -61,6 +63,14 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
   private dimensionCorrectionTimer: any;
   private pendingDimensionCorrections: Record<string, { width: number; height: number }> = {};
   containerWidth = signal(0);
+
+  /**
+   * Becomes true 1 second after pictures finish loading, giving the masonry
+   * engine time to measure the container and compute all positions before
+   * anything is rendered.
+   */
+  gridReady = signal(false);
+  private gridReadyTimer: any;
 
   /**
    * Justified masonry layout engine.
@@ -235,11 +245,8 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
       switch (field) {
         case 'name':
           return mult * a.name.localeCompare(b.name);
-        case 'createdAt': { // Fallback to uploadedAt if createdAt is missing, to keep consistent with displayed dates
-          const aDate = a.createdAt ?? a.uploadedAt;
-          const bDate = b.createdAt ?? b.uploadedAt;
-          return mult * (new Date(aDate).getTime() - new Date(bDate).getTime());
-        }
+        case 'createdAt':
+          return mult * (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
         case 'size':
           return mult * (a.size - b.size);
         default:
@@ -326,6 +333,7 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.unsubUploadComplete) this.unsubUploadComplete();
     this.resizeObserver?.disconnect();
     clearTimeout(this.dimensionCorrectionTimer);
+    clearTimeout(this.gridReadyTimer);
     // Revoke blob URLs
     Object.values(this.thumbnailUrls()).forEach(url => URL.revokeObjectURL(url));
     const lbUrl = this.lightboxUrl();
@@ -355,14 +363,18 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!albumId) return;
 
     this.picturesLoading.set(true);
+    this.gridReady.set(false);
     this.pictureService.getAlbumPictures(albumId).subscribe({
       next: (pics) => {
         this.pictures.set(pics);
         this.picturesLoading.set(false);
         this.loadThumbnails(pics); //Loading thumbnails for pictures
+        clearTimeout(this.gridReadyTimer);
+        this.gridReadyTimer = setTimeout(() => this.gridReady.set(true), 1000);
       },
       error: () => {
         this.picturesLoading.set(false);
+        this.gridReady.set(true); // show empty state on error too
       }
     });
   }
@@ -449,11 +461,6 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   goBack() {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    if (returnUrl) {
-      this.router.navigateByUrl(returnUrl);
-      return;
-    }
     const a = this.album();
     if (a) {
       this.router.navigate(['/profile', a.ownerId]);
@@ -470,14 +477,6 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.confirmingDelete.set(false);
   }
 
-  openShareModal() {
-    this.sharingAlbum.set(true);
-  }
-
-  closeShareModal() {
-    this.sharingAlbum.set(false);
-  }
-
   deleteAlbum() {
     const a = this.album();
     if (!a) return;
@@ -491,6 +490,15 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.confirmingDelete.set(false);
       }
     });
+  }
+
+  openShareModal(album: Album, event: Event): void {
+    event.stopPropagation();
+    this.sharingAlbum.set(album);
+  }
+
+  closeShareModal(): void {
+    this.sharingAlbum.set(null);
   }
 
   // --- Upload more photos ---
@@ -623,8 +631,8 @@ export class AlbumPageComponent implements OnInit, OnDestroy, AfterViewChecked {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
-  formatDate(date: string | null | undefined): string {
-    if (!date) return 'Unknown';
+  formatDate(date: string | null): string {
+    if (!date) return '—';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
