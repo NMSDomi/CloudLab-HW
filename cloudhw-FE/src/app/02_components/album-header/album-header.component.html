@@ -1,0 +1,72 @@
+<div class="album-header">
+  <div class="album-header-left">
+    <button class="btn-icon" (click)="backClicked.emit()" [title]="'common.back' | translate">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+    </button>
+    <div class="album-header-info">
+      <h1 class="album-title">{{ album().name }}</h1>
+      <div class="album-header-meta">
+        <span>{{ album().pictureCount }} {{ album().pictureCount === 1 ? ('common.photo' | translate) : ('common.photos' | translate) }}</span>
+        <span class="meta-dot">&middot;</span>
+        <span>{{ formatSize(album().size) }}</span>
+        @if (isOwner()) {
+          <span class="meta-dot">&middot;</span>
+          <button class="badge-toggle"
+                  [class.badge-toggle--public]="album().isPublic"
+                  [class.badge-toggle--private]="!album().isPublic"
+                  [disabled]="visibilityToggling()"
+                  (click)="visibilityToggled.emit()">
+            {{ album().isPublic ? ('common.public' | translate) : ('common.private' | translate) }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        } @else if (album().isPublic) {
+          <span class="meta-dot">&middot;</span>
+          <span class="badge badge--public">{{ 'common.public' | translate }}</span>
+        } @else {
+          <span class="meta-dot">&middot;</span>
+          <span class="badge badge--private">{{ 'common.private' | translate }}</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="album-header-actions">
+    @if (isOwner()) {
+      <label class="btn btn--primary btn--sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {{ 'album.addPhotos' | translate }}
+        <input type="file" multiple accept="image/*" hidden (change)="onFilesSelected($event)" />
+      </label>
+      <button class="btn btn--secondary btn--sm" (click)="shareClicked.emit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        {{ 'album.share' | translate }}
+      </button>
+    }
+
+    @if (album().isPublic) {
+      <button class="btn btn--secondary btn--sm" (click)="copyLink.emit()" [title]="'album.copyLinkTitle' | translate">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        {{ 'album.copyLink' | translate }}
+      </button>
+    }
+
+    <button class="btn btn--secondary btn--sm" (click)="downloadClicked.emit()"
+            [disabled]="downloading()" [title]="'album.downloadZipTitle' | translate">
+      @if (downloading()) {
+        <span class="spinner--sm"></span>
+      } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      }
+      {{ downloading() ? ('album.preparing' | translate) : ('album.downloadZip' | translate) }}
+    </button>
+
+    @if (isOwner()) {
+      <button class="btn btn--danger btn--sm" (click)="deleteClicked.emit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        {{ 'album.deleteAlbum' | translate }}
+      </button>
+    }
+  </div>
+</div>

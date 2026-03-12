@@ -1,0 +1,12 @@
+{
+  "placeholder": "Search albums and users…",
+  "loading": "Loading…",
+  "albums": "Albums",
+  "users": "Users",
+  "noResultsPre": "No results found for",
+  "startTyping": "Start typing to search albums and users…",
+  "navigate": "Navigate",
+  "open": "Open",
+  "close": "Close",
+  "toggle": "Toggle"
+}

@@ -30,6 +30,13 @@ export class PictureService {
     return this.http.delete<void>(`${environmentUrls.pictures}/${id}`);
   }
 
+  renamePicture(id: string, name: string): Observable<{ id: string; name: string }> {
+    return this.http.patch<{ id: string; name: string }>(
+      `${environmentUrls.pictures}/${id}/name`,
+      { name }
+    );
+  }
+
   getThumbnailUrl(pictureId: string): string {
     return `${environmentUrls.pictures}/${pictureId}/thumbnail`;
   }

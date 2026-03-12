@@ -47,6 +47,14 @@ public class PictureRepository(DataContext _context) : IPictureRepository
             .ToListAsync();
     }
 
+    public async Task<List<Picture>> GetWithDataByAlbumIdAsync(Guid albumId)
+    {
+        return await _context.Pictures
+            .Where(p => p.AlbumId == albumId)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<List<Picture>> GetThumbnailsByAlbumIdAsync(Guid albumId)
     {
         return await _context.Pictures
@@ -79,5 +87,14 @@ public class PictureRepository(DataContext _context) : IPictureRepository
     {
         _context.Pictures.Remove(picture);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> UpdateNameAsync(Guid id, string newName)
+    {
+        var picture = await _context.Pictures.FindAsync(id);
+        if (picture == null) return false;
+        picture.Name = newName;
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { PictureService } from './picture.service';
 import { AlbumService } from './album.service';
 
@@ -19,21 +20,12 @@ export interface SelectedFile {
 
 @Injectable({ providedIn: 'root' })
 export class UploadService {
-  private pictureService: PictureService | null = null;
 
   /** Current active upload task (null = idle) */
   activeUpload = signal<UploadTask | null>(null);
 
   /** Callback fired when an upload batch completes */
   private onCompleteCallbacks: Array<(albumId: string, albumName: string, count: number) => void> = [];
-
-  constructor() {
-    // Lazy-inject to avoid circular deps
-    import('./picture.service').then(m => {
-      // PictureService is providedIn root, we need the injector.
-      // Instead, we'll accept it via the upload method.
-    });
-  }
 
   isUploading(albumId: string): boolean {
     const u = this.activeUpload();
@@ -79,7 +71,7 @@ export class UploadService {
         percent: Math.round((i / files.length) * 100)
       });
       try {
-        const pic = await pictureService.uploadPicture(albumId, files[i].file).toPromise();
+        const pic = await firstValueFrom(pictureService.uploadPicture(albumId, files[i].file));
         if (i === coverIndex && pic) {
           coverPictureId = pic.id;
         }
@@ -99,7 +91,7 @@ export class UploadService {
     // Set cover picture if one was selected
     if (coverPictureId) {
       try {
-        await albumService.setCoverPicture(albumId, coverPictureId).toPromise();
+        await firstValueFrom(albumService.setCoverPicture(albumId, coverPictureId));
       } catch {
         // Non-critical failure
       }

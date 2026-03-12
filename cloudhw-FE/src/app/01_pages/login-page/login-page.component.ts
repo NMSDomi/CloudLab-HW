@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { Router } from '@angular/router';
 import { UserService } from '../../03_services/user.service';
 import { PasswordStrengthComponent } from '../../02_components/password-strength/password-strength.component';
@@ -8,7 +7,7 @@ import { PasswordStrengthComponent } from '../../02_components/password-strength
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PasswordStrengthComponent],
+  imports: [...SHARED_IMPORTS, PasswordStrengthComponent],
   templateUrl: './login-page.component.html',
   styleUrls: ['./login-page.component.css']
 })

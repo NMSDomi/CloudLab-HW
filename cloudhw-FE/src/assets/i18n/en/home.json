@@ -1,0 +1,7 @@
+{
+  "title": "Discover Albums",
+  "publicAlbum": "public album",
+  "publicAlbums": "public albums",
+  "loadingAlbums": "Loading albums...",
+  "noPublicAlbums": "No public albums yet."
+}

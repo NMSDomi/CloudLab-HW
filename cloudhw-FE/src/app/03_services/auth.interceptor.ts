@@ -3,23 +3,20 @@ import {
   HttpInterceptorFn, HttpRequest, HttpHandlerFn,
   HttpEvent, HttpErrorResponse
 } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap, filter, take, finalize } from 'rxjs/operators';
 import { UserService } from './user.service';
-
-let isRefreshing = false;
-const refreshTokenSubject = new BehaviorSubject<string | null>(null);
+import { AuthRefreshStateService } from './auth-refresh-state.service';
 
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
   const userService = inject(UserService);
+  const refreshState = inject(AuthRefreshStateService);
   const token = userService.getToken();
 
-  let authReq = req;
-  // Always include credentials so the HttpOnly refresh-token cookie is sent
-  authReq = req.clone({ withCredentials: true });
+  let authReq = req.clone({ withCredentials: true });
   if (token) {
     authReq = authReq.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
@@ -33,13 +30,12 @@ export const authInterceptor: HttpInterceptorFn = (
         !req.url.endsWith('/login') &&
         !req.url.endsWith('/refresh-token')
       ) {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          refreshTokenSubject.next(null);
+        if (!refreshState.isRefreshing) {
+          refreshState.start();
 
           return userService.refreshToken().pipe(
             switchMap(newToken => {
-              refreshTokenSubject.next(newToken);
+              refreshState.resolve(newToken);
               return next(
                 req.clone({
                   withCredentials: true,
@@ -48,22 +44,23 @@ export const authInterceptor: HttpInterceptorFn = (
               );
             }),
             catchError(err => {
+              refreshState.fail();
               userService.logout();
               return throwError(() => err);
             }),
             finalize(() => {
-              isRefreshing = false;
+              refreshState.isRefreshing = false;
             })
           );
         } else {
-          return refreshTokenSubject.pipe(
-            filter(token => token !== null),
+          return refreshState.tokenSubject.pipe(
+            filter(t => t !== null),
             take(1),
-            switchMap(token =>
+            switchMap(t =>
               next(
                 req.clone({
                   withCredentials: true,
-                  setHeaders: { Authorization: `Bearer ${token}` }
+                  setHeaders: { Authorization: `Bearer ${t}` }
                 })
               )
             )

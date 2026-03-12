@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../03_services/user.service';
 
 @Component({
   selector: 'app-confirm-email-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './confirm-email-page.component.html',
   styleUrls: ['./confirm-email-page.component.css']
 })

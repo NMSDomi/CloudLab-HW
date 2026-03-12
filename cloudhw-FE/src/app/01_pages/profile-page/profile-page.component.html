@@ -2,11 +2,11 @@
   @if (loading()) {
     <div class="profile-loading">
       <div class="spinner"></div>
-      <span>Loading profile...</span>
+      <span>{{ 'profile.loading' | translate }}</span>
     </div>
   } @else if (!profileUser()) {
     <div class="profile-card">
-      <p class="profile-empty">User not found.</p>
+      <p class="profile-empty">{{ 'profile.notFound' | translate }}</p>
     </div>
   } @else {
     <div class="profile-card">
@@ -23,8 +23,8 @@
         </div>
         @if (isOwnProfile()) {
           <div class="profile-header-actions">
-            <button class="btn btn--primary" (click)="startEdit()">Edit Profile</button>
-            <button class="btn btn--secondary" (click)="toggleChangePassword()">Change Password</button>
+            <button class="btn btn--primary" (click)="startEdit()">{{ 'profile.editProfile' | translate }}</button>
+            <button class="btn btn--secondary" (click)="toggleChangePassword()">{{ 'profile.changePassword' | translate }}</button>
           </div>
         }
       </div>
@@ -40,10 +40,10 @@
           <!-- Sliding tab header -->
           <div class="albums-tabs">
             <button class="albums-tab" [class.albums-tab--active]="albumsTab() === 'my'" (click)="switchTab('my')">
-              My Albums
+              {{ 'profile.myAlbums' | translate }}
             </button>
             <button class="albums-tab" [class.albums-tab--active]="albumsTab() === 'shared'" (click)="switchTab('shared')">
-              Shared with me
+              {{ 'profile.sharedWithMe' | translate }}
             </button>
             <span class="albums-tab-indicator" [class.albums-tab-indicator--right]="albumsTab() === 'shared'"></span>
           </div>
@@ -57,7 +57,7 @@
                 @if (albumsLoading()) {
                   <div class="albums-loading">
                     <div class="spinner"></div>
-                    <span>Loading albums...</span>
+                    <span>{{ 'profile.loadingAlbums' | translate }}</span>
                   </div>
                 } @else {
                   <div class="albums-grid">
@@ -69,9 +69,9 @@
                         </svg>
                       </div>
                       <div class="album-info">
-                        <h3 class="album-name">New Album</h3>
+                        <h3 class="album-name">{{ 'profile.newAlbum' | translate }}</h3>
                         <div class="album-meta">
-                          <span>Create a new album</span>
+                          <span>{{ 'profile.createNewAlbum' | translate }}</span>
                         </div>
                       </div>
                     </div>
@@ -95,15 +95,15 @@
                               <span class="album-upload-percent">{{ uploadService.getUploadPercent(album.id) }}%</span>
                             </div>
                           } @else if (album.isPublic) {
-                            <span class="album-badge album-badge--public">Public</span>
+                            <span class="album-badge album-badge--public">{{ 'common.public' | translate }}</span>
                           } @else {
-                            <span class="album-badge album-badge--private">Private</span>
+                            <span class="album-badge album-badge--private">{{ 'common.private' | translate }}</span>
                           }
                           @if (!uploadService.isUploading(album.id)) {
-                            <button class="album-share-btn" title="Share album" (click)="openShareModal(album, $event)">
+                            <button class="album-share-btn" [title]="'profile.shareAlbumTitle' | translate" (click)="openShareModal(album, $event)">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                             </button>
-                            <button class="album-delete-btn" title="Delete album" (click)="deleteAlbum(album, $event)">
+                            <button class="album-delete-btn" [title]="'profile.deleteAlbumBtnTitle' | translate" (click)="deleteAlbum(album, $event)">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                           }
@@ -111,7 +111,7 @@
                         <div class="album-info">
                           <h3 class="album-name">{{ album.name }}</h3>
                           <div class="album-meta">
-                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? ('common.photo' | translate) : ('common.photos' | translate) }}</span>
                             <span class="album-meta-dot">&middot;</span>
                             <span>{{ formatSize(album.size) }}</span>
                           </div>
@@ -127,10 +127,10 @@
                 @if (sharedAlbumsLoading()) {
                   <div class="albums-loading">
                     <div class="spinner"></div>
-                    <span>Loading shared albums...</span>
+                    <span>{{ 'profile.loadingSharedAlbums' | translate }}</span>
                   </div>
                 } @else if (sharedAlbums().length === 0) {
-                  <p class="albums-empty">No albums have been shared with you yet.</p>
+                  <p class="albums-empty">{{ 'profile.noSharedAlbums' | translate }}</p>
                 } @else {
                   <div class="albums-grid">
                     @for (album of sharedAlbums(); track album.id) {
@@ -147,15 +147,15 @@
                               </svg>
                             </div>
                           }
-                          <span class="album-badge album-badge--shared">Shared</span>
+                          <span class="album-badge album-badge--shared">{{ 'common.shared' | translate }}</span>
                         </div>
                         <div class="album-info">
                           <h3 class="album-name">{{ album.name }}</h3>
                           <div class="album-meta">
-                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                            <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? ('common.photo' | translate) : ('common.photos' | translate) }}</span>
                             @if (album.ownerName) {
                               <span class="album-meta-dot">&middot;</span>
-                              <span>by {{ album.ownerName }}</span>
+                              <span>{{ 'common.by' | translate }} {{ album.ownerName }}</span>
                             }
                           </div>
                         </div>
@@ -170,14 +170,14 @@
 
         } @else {
           <!-- Public albums (other user's profile, no slider) -->
-          <h2 class="albums-title">Public Albums</h2>
+          <h2 class="albums-title">{{ 'profile.publicAlbums' | translate }}</h2>
           @if (albumsLoading()) {
             <div class="albums-loading">
               <div class="spinner"></div>
-              <span>Loading albums...</span>
+              <span>{{ 'profile.loadingAlbums' | translate }}</span>
             </div>
           } @else if (albums().length === 0) {
-            <p class="albums-empty">No albums yet.</p>
+            <p class="albums-empty">{{ 'profile.noAlbums' | translate }}</p>
           } @else {
             <div class="albums-grid">
               @for (album of albums(); track album.id) {
@@ -195,15 +195,15 @@
                       </div>
                     }
                     @if (album.isPublic) {
-                      <span class="album-badge album-badge--public">Public</span>
+                      <span class="album-badge album-badge--public">{{ 'common.public' | translate }}</span>
                     } @else {
-                      <span class="album-badge album-badge--private">Private</span>
+                      <span class="album-badge album-badge--private">{{ 'common.private' | translate }}</span>
                     }
                   </div>
                   <div class="album-info">
                     <h3 class="album-name">{{ album.name }}</h3>
                     <div class="album-meta">
-                      <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? 'photo' : 'photos' }}</span>
+                      <span>{{ album.pictureCount }} {{ album.pictureCount === 1 ? ('common.photo' | translate) : ('common.photos' | translate) }}</span>
                       <span class="album-meta-dot">&middot;</span>
                       <span>{{ formatSize(album.size) }}</span>
                     </div>
@@ -223,7 +223,7 @@
   <div class="modal-overlay" (click)="cancelEdit()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Edit Profile</h2>
+        <h2>{{ 'profile.editProfileTitle' | translate }}</h2>
         <button class="modal-close" (click)="cancelEdit()">&times;</button>
       </div>
       @if (errorMessage()) {
@@ -231,16 +231,16 @@
       }
       <form class="modal-body" (ngSubmit)="saveProfile()">
         <div class="form-group">
-          <label for="editName">Name</label>
+          <label for="editName">{{ 'profile.nameLabel' | translate }}</label>
           <input id="editName" type="text" [(ngModel)]="editName" name="editName" required />
         </div>
         <div class="form-group">
-          <label for="editEmail">Email</label>
+          <label for="editEmail">{{ 'profile.emailLabel' | translate }}</label>
           <input id="editEmail" type="email" [(ngModel)]="editEmail" name="editEmail" required />
         </div>
         <div class="modal-actions">
-          <button class="btn btn--primary" type="submit">Save</button>
-          <button class="btn btn--secondary" type="button" (click)="cancelEdit()">Cancel</button>
+          <button class="btn btn--primary" type="submit">{{ 'common.save' | translate }}</button>
+          <button class="btn btn--secondary" type="button" (click)="cancelEdit()">{{ 'common.cancel' | translate }}</button>
         </div>
       </form>
     </div>
@@ -252,7 +252,7 @@
   <div class="modal-overlay" (click)="toggleChangePassword()">
     <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Change Password</h2>
+        <h2>{{ 'profile.changePasswordTitle' | translate }}</h2>
         <button class="modal-close" (click)="toggleChangePassword()">&times;</button>
       </div>
       @if (errorMessage()) {
@@ -260,24 +260,24 @@
       }
       <form class="modal-body" (ngSubmit)="savePassword()">
         <div class="form-group">
-          <label for="curPass">Current Password</label>
+          <label for="curPass">{{ 'profile.currentPassword' | translate }}</label>
           <input id="curPass" type="password" [(ngModel)]="currentPassword" name="currentPassword" required />
         </div>
         <div class="form-group">
-          <label for="newPass">New Password</label>
+          <label for="newPass">{{ 'profile.newPassword' | translate }}</label>
           <input id="newPass" type="password" [(ngModel)]="newPassword" name="newPassword" required />
           <app-password-strength [password]="newPassword" (valid)="newPasswordValid = $event"></app-password-strength>
         </div>
         <div class="form-group">
-          <label for="confPass">Confirm New Password</label>
+          <label for="confPass">{{ 'profile.confirmNewPassword' | translate }}</label>
           <input id="confPass" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required />
         </div>
         @if (currentPassword && newPassword && currentPassword === newPassword) {
-          <div class="msg msg--error">Az új jelszó nem egyezhet a jelenlegi jelszóval.</div>
+          <div class="msg msg--error">{{ 'profile.passwordsMustDiffer' | translate }}</div>
         }
         <div class="modal-actions">
-          <button class="btn btn--primary" type="submit" [disabled]="!isChangePasswordValid">Update Password</button>
-          <button class="btn btn--secondary" type="button" (click)="toggleChangePassword()">Cancel</button>
+          <button class="btn btn--primary" type="submit" [disabled]="!isChangePasswordValid">{{ 'profile.updatePassword' | translate }}</button>
+          <button class="btn btn--secondary" type="button" (click)="toggleChangePassword()">{{ 'common.cancel' | translate }}</button>
         </div>
       </form>
     </div>
@@ -289,7 +289,7 @@
   <div class="modal-overlay" (click)="cancelCreateAlbum()">
     <div class="modal-card modal-card--wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Create Album</h2>
+        <h2>{{ 'profile.createAlbumTitle' | translate }}</h2>
         <button class="modal-close" (click)="cancelCreateAlbum()" [disabled]="albumCreating()">&times;</button>
       </div>
       @if (errorMessage()) {
@@ -298,18 +298,18 @@
       <div class="modal-body modal-body--scroll">
         <!-- Album info fields -->
         <div class="form-group">
-          <label for="albumName">Album Name</label>
+          <label for="albumName">{{ 'profile.albumNameLabel' | translate }}</label>
           <input id="albumName" type="text" [(ngModel)]="newAlbumName" name="albumName"
-                 placeholder="My Vacation Photos" required [disabled]="albumCreating()" />
+                 [placeholder]="'profile.albumNamePlaceholder' | translate" required [disabled]="albumCreating()" />
         </div>
         <div class="form-group">
-          <label for="albumDesc">Description</label>
+          <label for="albumDesc">{{ 'profile.descriptionLabel' | translate }}</label>
           <textarea id="albumDesc" [(ngModel)]="newAlbumDescription" name="albumDesc"
-                    placeholder="Optional description..." rows="2" [disabled]="albumCreating()"></textarea>
+                    [placeholder]="'profile.descriptionPlaceholder' | translate" rows="2" [disabled]="albumCreating()"></textarea>
         </div>
         <div class="form-row">
           <label class="toggle-label">
-            <span class="toggle-text">Public album</span>
+            <span class="toggle-text">{{ 'profile.publicAlbumToggle' | translate }}</span>
             <div class="toggle-switch" [class.toggle-switch--on]="newAlbumIsPublic" (click)="newAlbumIsPublic = !newAlbumIsPublic">
               <div class="toggle-knob"></div>
             </div>
@@ -318,7 +318,7 @@
 
         <!-- File drop zone -->
         <div class="form-group">
-          <label>Pictures</label>
+          <label>{{ 'profile.picturesLabel' | translate }}</label>
           <div class="drop-zone" [class.drop-zone--active]="dragOver()"
                (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)"
                (click)="fileInput.click()">
@@ -328,8 +328,8 @@
               <polyline points="17 8 12 3 7 8" />
               <line x1="12" y1="3" x2="12" y2="15" />
             </svg>
-            <span class="drop-zone-text">Drop images here or click to browse</span>
-            <span class="drop-zone-hint">Supports JPG, PNG, WebP, GIF</span>
+            <span class="drop-zone-text">{{ 'profile.dropImages' | translate }}</span>
+            <span class="drop-zone-hint">{{ 'profile.supportedFormats' | translate }}</span>
           </div>
         </div>
 
@@ -337,15 +337,15 @@
         @if (selectedFiles().length > 0) {
           <div class="selected-files">
             <div class="selected-files-header">
-              <span>{{ selectedFiles().length }} file{{ selectedFiles().length === 1 ? '' : 's' }} selected</span>
-              <button class="btn-link" (click)="selectedFiles.set([])">Clear all</button>
+              <span>{{ selectedFiles().length }} {{ selectedFiles().length === 1 ? ('profile.fileSelected' | translate) : ('profile.filesSelected' | translate) }}</span>
+              <button class="btn-link" (click)="selectedFiles.set([])">{{ 'profile.clearAll' | translate }}</button>
             </div>
             <div class="selected-files-grid">
               @for (sf of selectedFiles(); track sf.preview; let i = $index) {
                 <div class="file-preview" [class.file-preview--cover]="coverIndex() === i" (click)="selectCover(i)">
                   <img [src]="sf.preview" alt="{{ sf.name }}" [title]="sf.name" />
                   @if (coverIndex() === i) {
-                    <span class="file-cover-badge">Cover</span>
+                    <span class="file-cover-badge">{{ 'album.cover' | translate }}</span>
                   }
                   <button class="file-preview-remove" (click)="removeFile(i); $event.stopPropagation()" [disabled]="albumCreating()">&times;</button>
                   <div class="file-preview-info">
@@ -363,12 +363,12 @@
         <button class="btn btn--primary" (click)="submitCreateAlbum()" [disabled]="albumCreating() || !newAlbumName.trim()">
           @if (albumCreating()) {
             <span class="spinner spinner--sm"></span>
-            Creating...
+            {{ 'profile.creating' | translate }}
           } @else {
-            Create Album
+            {{ 'profile.createAlbumBtn' | translate }}
           }
         </button>
-        <button class="btn btn--secondary" (click)="cancelCreateAlbum()" [disabled]="albumCreating()">Cancel</button>
+        <button class="btn btn--secondary" (click)="cancelCreateAlbum()" [disabled]="albumCreating()">{{ 'common.cancel' | translate }}</button>
       </div>
     </div>
   </div>
@@ -381,11 +381,11 @@
       <div class="delete-modal-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
       </div>
-      <h2 class="delete-modal-title">Delete Album</h2>
-      <p class="delete-modal-text">Are you sure you want to delete <strong>"{{ album.name }}"</strong>? This will permanently remove all {{ album.pictureCount }} photo{{ album.pictureCount === 1 ? '' : 's' }}.</p>
+      <h2 class="delete-modal-title">{{ 'profile.deleteAlbumTitle' | translate }}</h2>
+      <p class="delete-modal-text">{{ 'profile.confirmDeletePre' | translate }} <strong>"{{ album.name }}"</strong>? {{ 'profile.confirmDeleteMid' | translate }} {{ album.pictureCount }} {{ album.pictureCount === 1 ? ('common.photo' | translate) : ('common.photos' | translate) }}.</p>
       <div class="modal-actions">
-        <button class="btn btn--danger" (click)="confirmDeleteAlbum()">Delete</button>
-        <button class="btn btn--secondary" (click)="cancelDeleteAlbum()">Cancel</button>
+        <button class="btn btn--danger" (click)="confirmDeleteAlbum()">{{ 'common.delete' | translate }}</button>
+        <button class="btn btn--secondary" (click)="cancelDeleteAlbum()">{{ 'common.cancel' | translate }}</button>
       </div>
     </div>
   </div>

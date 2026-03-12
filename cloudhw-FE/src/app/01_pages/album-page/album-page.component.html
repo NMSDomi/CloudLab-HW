@@ -2,16 +2,15 @@
   <div class="album-container">
     <div class="album-loading">
       <div class="spinner"></div>
-      <span>Loading album…</span>
+      <span>{{ 'album.loading' | translate }}</span>
     </div>
   </div>
 } @else if (!album()) {
   <div class="album-container">
-    <div class="album-empty">Album not found.</div>
+    <div class="album-empty">{{ 'album.notFound' | translate }}</div>
   </div>
 } @else {
   <div class="album-container">
-    <!-- Floating toasts -->
     @if (toastMessage()) {
       <div class="toast toast--success">{{ toastMessage() }}</div>
     }
@@ -20,223 +19,49 @@
     }
 
     <div class="album-card-wrap">
-      <!-- Header -->
-      <div class="album-header">
-        <div class="album-header-left">
-          <button class="btn-icon" (click)="goBack()" title="Back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-          </button>
-          <div class="album-header-info">
-            <h1 class="album-title">{{ album()!.name }}</h1>
-            <div class="album-header-meta">
-              <span>{{ album()!.pictureCount }} {{ album()!.pictureCount === 1 ? 'photo' : 'photos' }}</span>
-              <span class="meta-dot">&middot;</span>
-              <span>{{ formatSize(album()!.size) }}</span>
-              @if (isOwner()) {
-                <span class="meta-dot">&middot;</span>
-                <button class="badge-toggle" [class.badge-toggle--public]="album()!.isPublic" [class.badge-toggle--private]="!album()!.isPublic" (click)="toggleVisibility()">
-                  {{ album()!.isPublic ? 'Public' : 'Private' }}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-              } @else if (album()!.isPublic) {
-                <span class="meta-dot">&middot;</span>
-                <span class="badge badge--public">Public</span>
-              } @else {
-                <span class="meta-dot">&middot;</span>
-                <span class="badge badge--private">Private</span>
-              }
-            </div>
-          </div>
-        </div>
+      <app-album-header
+        [album]="album()!"
+        [isOwner]="isOwner()"
+        [downloading]="downloading()"
+        [visibilityToggling]="togglingVisibility()"
+        (backClicked)="goBack()"
+        (visibilityToggled)="toggleVisibility()"
+        (filesSelected)="onFilesSelected($event)"
+        (shareClicked)="openShareModal()"
+        (copyLink)="copyShareLink()"
+        (downloadClicked)="downloadAlbum()"
+        (deleteClicked)="confirmDeleteAlbum()"
+      />
 
-        @if (isOwner()) {
-          <div class="album-header-actions">
-            <label class="btn btn--primary btn--sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add Photos
-              <input type="file" multiple accept="image/*" hidden (change)="onFilesSelected($event)" />
-            </label>
-            <button class="btn btn--secondary btn--sm" (click)="openShareModal(album()!, $event)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-              Share
-            </button>
-            <button class="btn btn--danger btn--sm" (click)="confirmDeleteAlbum()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              Delete Album
-            </button>
-          </div>
-        }
-      </div>
-
-      <!-- Description -->
       @if (album()!.description) {
         <p class="album-description">{{ album()!.description }}</p>
       }
 
-      <!-- Sort bar -->
-      @if (pictures().length > 0) {
-        <div class="sort-bar">
-          <span class="sort-label">Sort by</span>
-          <button class="sort-btn" [class.sort-btn--active]="sortField() === 'name'" (click)="setSort('name')">
-            Name {{ getSortIcon('name') }}
-          </button>
-          <button class="sort-btn" [class.sort-btn--active]="sortField() === 'createdAt'" (click)="setSort('createdAt')">
-            Date {{ getSortIcon('createdAt') }}
-          </button>
-          <button class="sort-btn" [class.sort-btn--active]="sortField() === 'size'" (click)="setSort('size')">
-            Size {{ getSortIcon('size') }}
-          </button>
-        </div>
-      }
-
-      <!-- Pictures grid -->
-      <div #gridContainer>
-      @if (!picturesLoading() && pictures().length === 0) {
-        <div class="pictures-empty">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="m21 15-5-5L5 21" />
-          </svg>
-          <p>No photos yet.</p>
-          @if (isOwner()) {
-            <label class="btn btn--primary" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
-              Upload photos
-              <input type="file" multiple accept="image/*" hidden (change)="onFilesSelected($event)" />
-            </label>
-          }
-        </div>
-      } @else {
-        <div class="pictures-grid"
-             [style.height.px]="masonryLayout().totalHeight"
-             (dragover)="onDragOver($event)"
-             (dragleave)="onDragLeave($event)"
-             (drop)="onDrop($event)"
-             [class.pictures-grid--dragover]="dragOver()">
-          @for (pic of sortedPictures(); track pic.id) {
-            <div class="picture-card"
-                 [class.picture-card--cover]="album()!.coverPictureId === pic.id"
-                 [style.left.px]="masonryLayout().itemPositions[pic.id]?.left || 0"
-                 [style.top.px]="masonryLayout().itemPositions[pic.id]?.top || 0"
-                 [style.width.px]="masonryLayout().itemPositions[pic.id]?.width || 200"
-                 [style.height.px]="masonryLayout().itemPositions[pic.id]?.height || 150"
-                 (click)="openLightbox(pic)">
-              <div class="picture-thumb">
-                @if (thumbnailUrls()[pic.id]) {
-                  <img [src]="thumbnailUrls()[pic.id]" alt="pic.name" [title]="pic.name" loading="lazy" (load)="onThumbnailLoad($event, pic)" />
-                } @else {
-                  <div class="picture-thumb-placeholder"
-                       [style.aspect-ratio]="pic.width && pic.height ? pic.width + '/' + pic.height : '4/3'">
-                    <div class="placeholder-shimmer"></div>
-                  </div>
-                }
-
-                @if (album()!.coverPictureId === pic.id) {
-                  <span class="cover-badge">Cover</span>
-                }
-
-                <!-- Overlay actions -->
-                @if (isOwner()) {
-                  <div class="picture-actions">
-                    @if (album()!.coverPictureId !== pic.id) {
-                      <button class="action-btn" title="Set as cover" (click)="setCover(pic); $event.stopPropagation()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-                      </button>
-                    }
-                    <button class="action-btn action-btn--danger" title="Delete" (click)="deletePicture(pic); $event.stopPropagation()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
-                  </div>
-                }
-
-                <!-- Hover info overlay -->
-                <div class="picture-info-overlay">
-                  <span class="picture-name" [title]="pic.name">{{ trimName(pic.name) }}</span>
-                  <span class="picture-meta">{{ formatSize(pic.size) }} &middot; {{ formatDate(pic.createdAt) }}</span>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      }
-      </div>
+      <app-picture-grid
+        [pictures]="pictures()"
+        [album]="album()!"
+        [isOwner]="isOwner()"
+        [thumbnailUrls]="thumbnailUrls()"
+        (pictureDeleted)="onPictureDeleted($event)"
+        (coverSet)="onCoverSet($event)"
+        (renamed)="onRenamed($event)"
+        (filesDropped)="onFilesDropped($event)"
+      />
     </div>
 
-    <!-- Lightbox -->
-    @if (lightboxPic()) {
-      <div class="lightbox-backdrop" (click)="closeLightbox()">
-        <!-- Top controls -->
-        <div class="lightbox-top-controls" (click)="$event.stopPropagation()">
-          <button class="lightbox-btn" title="Download" (click)="downloadLightbox()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
-          <button class="lightbox-btn" title="Close (Esc)" (click)="closeLightbox()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Prev arrow -->
-        @if (lightboxHasPrev) {
-          <button class="lightbox-nav lightbox-nav--prev" (click)="navigateLightbox(-1); $event.stopPropagation()" title="Previous (←)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-          </button>
-        }
-
-        <!-- Next arrow -->
-        @if (lightboxHasNext) {
-          <button class="lightbox-nav lightbox-nav--next" (click)="navigateLightbox(1); $event.stopPropagation()" title="Next (→)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </button>
-        }
-
-        <div class="lightbox-content" (click)="$event.stopPropagation()">
-          @if (lightboxLoading()) {
-            <div class="lightbox-loading">
-              <div class="spinner"></div>
-            </div>
-          } @else if (lightboxUrl()) {
-            <img [src]="lightboxUrl()" alt="lightboxPic()!.name" class="lightbox-img" />
-          }
-          <div class="lightbox-info">
-            <span class="lightbox-name">{{ trimName(lightboxPic()!.name) }}</span>
-            <span class="lightbox-meta">
-              {{ lightboxPic()!.width }}×{{ lightboxPic()!.height }} &middot;
-              {{ formatSize(lightboxPic()!.size) }}<br>
-              Taken: {{ formatDate(lightboxPic()!.createdAt) }} &middot;
-              Uploaded: {{ formatDate(lightboxPic()!.uploadedAt) }}
-            </span>
-          </div>
-        </div>
-      </div>
-    }
-    <!-- Delete confirm modal -->
     @if (confirmingDelete()) {
       <div class="modal-backdrop" (click)="cancelDeleteAlbum()">
         <div class="modal-card" (click)="$event.stopPropagation()">
-          <h2 class="modal-title">Delete Album</h2>
-          <p class="modal-text">Are you sure you want to delete <strong>"{{ album()!.name }}"</strong>? This will permanently remove all {{ album()!.pictureCount }} photos. This action cannot be undone.</p>
+          <h2 class="modal-title">{{ 'album.confirmDeleteTitle' | translate }}</h2>
+          <p class="modal-text">{{ 'album.confirmDeletePre' | translate }} <strong>"{{ album()!.name }}"</strong>? {{ 'album.confirmDeleteMid' | translate }} {{ album()!.pictureCount }} {{ 'album.confirmDeletePost' | translate }}</p>
           <div class="modal-actions">
-            <button class="btn btn--secondary" (click)="cancelDeleteAlbum()">Cancel</button>
-            <button class="btn btn--danger" (click)="deleteAlbum()">Delete Album</button>
+            <button class="btn btn--secondary" (click)="cancelDeleteAlbum()">{{ 'common.cancel' | translate }}</button>
+            <button class="btn btn--danger" (click)="deleteAlbum()">{{ 'album.deleteAlbum' | translate }}</button>
           </div>
         </div>
       </div>
     }
 
-    <!-- Share album modal -->
     @if (sharingAlbum()) {
       <app-share-album-modal
         [albumId]="album()!.id"

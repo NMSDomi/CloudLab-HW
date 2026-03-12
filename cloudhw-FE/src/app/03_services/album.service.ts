@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Album } from '../04_models/album.model';
 import { environmentUrls } from '../../enviroment/enviroment';
 
@@ -56,13 +56,13 @@ export class AlbumService {
     return this.http.delete<void>(`${environmentUrls.albums}/${albumId}/share/${encodeURIComponent(targetUserId)}`);
   }
 
+  downloadAlbumZip(albumId: string): Observable<Blob> {
+    return this.http.get(`${environmentUrls.albums}/${albumId}/download`, { responseType: 'blob' });
+  }
+
   getAlbumShares(albumId: string): Observable<{ userId: string; userName: string; sharedAt: string }[]> {
-    return this.http.get<any>(`${environmentUrls.albums}/${albumId}`).pipe(
-      map((album: any) => (album.SharedWith ?? album.sharedWith ?? []).map((s: any) => ({
-        userId: s.UserId ?? s.userId,
-        userName: s.UserName ?? s.userName,
-        sharedAt: s.SharedAt ?? s.sharedAt
-      })))
+    return this.http.get<{ userId: string; userName: string; sharedAt: string }[]>(
+      `${environmentUrls.albums}/${albumId}/shares`
     );
   }
 }

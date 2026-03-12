@@ -10,6 +10,9 @@ public interface IPictureRepository
     Task<List<Picture>> GetByAlbumIdAsync(Guid albumId);
     /// <summary>Returns pictures for an album with only thumbnail bytes (no full Data).</summary>
     Task<List<Picture>> GetThumbnailsByAlbumIdAsync(Guid albumId);
+    /// <summary>Returns pictures for an album including full image Data bytes (for ZIP download).</summary>
+    Task<List<Picture>> GetWithDataByAlbumIdAsync(Guid albumId);
     Task<Picture> CreateAsync(Picture picture);
     Task DeleteAsync(Picture picture);
+    Task<bool> UpdateNameAsync(Guid id, string newName);
 }

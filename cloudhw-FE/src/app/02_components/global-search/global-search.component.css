@@ -170,6 +170,29 @@
   flex-shrink: 0;
 }
 
+/* Section label */
+.gs-section-label {
+  padding: 6px 16px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 2px;
+}
+
+.gs-section-label:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+/* User avatar placeholder */
+.gs-user-avatar {
+  background: var(--bg-glass);
+  color: var(--text-dim);
+}
+
 /* Empty state */
 .gs-empty {
   display: flex;

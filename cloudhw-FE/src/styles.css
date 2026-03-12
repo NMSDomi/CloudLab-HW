@@ -53,6 +53,86 @@
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 16px;
+
+  /* Page & structural backgrounds */
+  --bg-page: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
+  --bg-header: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+
+  /* Card surfaces (used where glass doesn't apply) */
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --border-card: rgba(255, 255, 255, 0.1);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ======================== Light theme overrides ======================== */
+/* Palette: original dark hues (#0f0c29, #302b63) pushed toward a light lavender.
+   Header intentionally keeps the dark gradient — white text remains readable. */
+[data-theme="light"] {
+  /* Page background — derived from the dark hues, not white */
+  --bg-page: linear-gradient(135deg, #c8c4e2, #d2ceec, #c6cae4);
+  /* --bg-header intentionally NOT overridden — inherits dark gradient from :root */
+
+  /* Surfaces */
+  --bg-surface: #d6d2ea;
+  --bg-glass: rgba(255, 255, 255, 0.05);
+  --bg-card: rgba(255, 255, 255, 0.42);
+  --border-card: rgba(255, 255, 255, 0.5);
+  --shadow-card: 0 4px 20px rgba(70, 60, 130, 0.14);
+  --bg-input: rgba(0, 0, 0, 0.06);
+  --bg-hover: rgba(0, 0, 0, 0.06);
+  --bg-active: rgba(0, 0, 0, 0.11);
+
+  /* Glass */
+  --glass-border: rgba(255, 255, 255, 0.38);
+  --glass-shadow: 0 4px 20px rgba(70, 60, 130, 0.14);
+
+  /* Text — dark for content areas (not the header) */
+  --text: #1a1a2e;
+  --text-secondary: rgba(26, 26, 46, 0.85);
+  --text-muted: rgba(26, 26, 46, 0.65);
+  --text-dim: rgba(26, 26, 46, 0.5);
+  --text-hint: rgba(26, 26, 46, 0.38);
+  --text-faint: rgba(26, 26, 46, 0.27);
+  --text-placeholder: rgba(26, 26, 46, 0.2);
+
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.18);
+
+  /* Shadows — header stays same weight (dark bg), modal a little lighter */
+  --shadow-header: 0 2px 20px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+/* -------- Light mode button overrides (in styles.css so they apply globally) -------- */
+[data-theme="light"] .btn--primary {
+  color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .btn--secondary {
+  background: rgba(26, 26, 46, 0.07);
+  border-color: rgba(26, 26, 46, 0.18);
+  color: #1a1a2e;
+}
+
+[data-theme="light"] .btn--secondary:hover {
+  background: rgba(26, 26, 46, 0.13);
+  border-color: rgba(26, 26, 46, 0.28);
+  color: #1a1a2e;
+  opacity: 1;
+}
+
+[data-theme="light"] .btn--danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+}
+
+[data-theme="light"] .btn--danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
 }
 
 /* ======================== Reset ======================== */
@@ -67,9 +147,14 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
+  background: var(--bg-page);
   background-attachment: fixed;
-  color: #ffffff;
+  color: var(--text);
+}
+
+[data-theme="light"] body {
+  background: var(--bg-page);
+  color: var(--text);
 }
 
 /* ======================== Shared Spinner ======================== */
@@ -320,6 +405,19 @@ html, body {
   text-align: center;
   width: 100%;
   margin-top: 6px;
+}
+
+/* Reusable character counter — place below an input inside .form-group */
+.char-counter {
+  font-size: 0.75rem;
+  color: var(--text-hint);
+  text-align: right;
+  margin-top: 2px;
+  transition: color 0.2s;
+}
+
+.char-counter--warn {
+  color: var(--primary);
 }
 
 /* ======================== Shared Modal ======================== */
@@ -627,8 +725,8 @@ html, body {
   padding: 4px 10px;
   border-radius: 6px;
   z-index: 1;
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 

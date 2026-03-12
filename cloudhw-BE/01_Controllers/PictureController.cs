@@ -1,4 +1,5 @@
 using cloudhw_BE.BLL.Services.Interfaces;
+using cloudhw_BE.Controllers.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -40,14 +41,16 @@ public class PictureController(
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var pictures = await _pictureService.GetAlbumThumbnailsAsync(albumId, userId ?? string.Empty);
-        return Ok(pictures.Select(p => new
+        return Ok(pictures
+            .Where(p => p.Thumbnail is { Length: > 0 })
+            .Select(p => new
         {
             p.Id,
             p.Name,
             p.CreatedAt,
             p.UploadedAt,
             p.Size,
-            p.ContentType,
+            ContentType = "image/jpeg",
             p.Width,
             p.Height,
             p.AlbumId,
@@ -182,5 +185,21 @@ public class PictureController(
         if (!success) return NotFound();
 
         return Ok();
+    }
+
+    [HttpPatch("{id}/name")]
+    public async Task<IActionResult> RenamePicture(Guid id, [FromBody] RenamePictureRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var trimmed = request.Name?.Trim();
+        if (string.IsNullOrEmpty(trimmed) || trimmed.Length > 40)
+            return BadRequest("Name must be between 1 and 40 characters.");
+
+        var picture = await _pictureService.RenamePictureAsync(id, trimmed, userId);
+        if (picture == null) return NotFound();
+
+        return Ok(new { picture.Id, picture.Name });
     }
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { Router } from '@angular/router';
 import { AlbumService } from '../../03_services/album.service';
 import { PictureService } from '../../03_services/picture.service';
@@ -10,7 +10,7 @@ const PAGE_SIZE = 25;
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.css'],
 })

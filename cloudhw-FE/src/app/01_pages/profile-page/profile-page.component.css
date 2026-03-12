@@ -4,7 +4,8 @@
   align-items: center;
   padding: 40px 24px;
   min-height: calc(100vh - 64px);
-  background: linear-gradient(135deg, #0f0c29, #1a1a2e, #16213e);
+  background: var(--bg-page);
+  background-attachment: fixed;
 }
 
 .profile-card {
@@ -631,7 +632,7 @@
 
 .delete-modal-text {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-muted);
   line-height: 1.5;
   margin: 0 0 24px;
 }

@@ -1,0 +1,12 @@
+{
+  "placeholder": "Albumok és felhasználók keresése…",
+  "loading": "Betöltés…",
+  "albums": "Albumok",
+  "users": "Felhasználók",
+  "noResultsPre": "Nincs találat erre:",
+  "startTyping": "Kezdj gépelni az albumok és felhasználók kereséséhez…",
+  "navigate": "Navigáció",
+  "open": "Megnyitás",
+  "close": "Bezárás",
+  "toggle": "Váltás"
+}

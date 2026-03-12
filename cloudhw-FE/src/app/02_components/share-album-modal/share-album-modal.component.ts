@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { UserService } from '../../03_services/user.service';
 import { AlbumService } from '../../03_services/album.service';
 
@@ -19,7 +18,7 @@ interface ShareEntry {
 @Component({
   selector: 'app-share-album-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './share-album-modal.component.html',
   styleUrls: ['./share-album-modal.component.css']
 })

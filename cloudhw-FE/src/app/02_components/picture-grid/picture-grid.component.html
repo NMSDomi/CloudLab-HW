@@ -1,0 +1,212 @@
+<!-- Sort bar -->
+@if (pictures().length > 0) {
+  <div class="sort-bar">
+    <span class="sort-label">{{ 'album.sortBy' | translate }}</span>
+    <button class="sort-btn" [class.sort-btn--active]="sortField() === 'name'" (click)="setSort('name')">
+      {{ 'album.sortName' | translate }} {{ getSortIcon('name') }}
+    </button>
+    <button class="sort-btn" [class.sort-btn--active]="sortField() === 'createdAt'" (click)="setSort('createdAt')">
+      {{ 'album.sortDate' | translate }} {{ getSortIcon('createdAt') }}
+    </button>
+    <button class="sort-btn" [class.sort-btn--active]="sortField() === 'size'" (click)="setSort('size')">
+      {{ 'album.sortSize' | translate }} {{ getSortIcon('size') }}
+    </button>
+  </div>
+}
+
+<!-- Pictures grid -->
+<div #gridContainer>
+  @if (pictures().length === 0) {
+    <div class="pictures-empty">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="m21 15-5-5L5 21" />
+      </svg>
+      <p>{{ 'album.noPhotos' | translate }}</p>
+      @if (isOwner()) {
+        <label class="btn btn--primary"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+          {{ 'album.uploadPhotos' | translate }}
+          <input type="file" multiple accept="image/*" hidden (change)="onFilesSelectedFromInput($event)" />
+        </label>
+      }
+    </div>
+  } @else {
+    <div class="pictures-grid"
+         [style.height.px]="masonryLayout().totalHeight"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)"
+         [class.pictures-grid--dragover]="dragOver()">
+      @for (pic of sortedPictures(); track pic.id) {
+        <div class="picture-card"
+             [attr.data-pic-id]="pic.id"
+             [class.picture-card--cover]="album().coverPictureId === pic.id"
+             [style.left.px]="masonryLayout().itemPositions[pic.id]?.left ?? 0"
+             [style.top.px]="masonryLayout().itemPositions[pic.id]?.top ?? 0"
+             [style.width.px]="masonryLayout().itemPositions[pic.id]?.width ?? 200"
+             [style.height.px]="masonryLayout().itemPositions[pic.id]?.height ?? 150"
+             (click)="openLightbox(pic)">
+          <div class="picture-thumb">
+            @if (thumbnailUrls()[pic.id]) {
+              <img [src]="thumbnailUrls()[pic.id]" alt="pic.name" [title]="pic.name"
+                   loading="lazy" (load)="onThumbnailLoad($event, pic)" />
+            } @else {
+              <div class="picture-thumb-placeholder"
+                   [style.aspect-ratio]="pic.width && pic.height ? pic.width + '/' + pic.height : '4/3'">
+                <div class="placeholder-shimmer"></div>
+              </div>
+            }
+
+            @if (album().coverPictureId === pic.id) {
+              <span class="cover-badge">{{ 'album.cover' | translate }}</span>
+            }
+
+            <!-- Hover actions (owner only) -->
+            @if (isOwner()) {
+              <div class="picture-actions">
+                @if (album().coverPictureId !== pic.id) {
+                  <button class="action-btn" [title]="'album.setCoverTitle' | translate"
+                          (click)="onSetCover(pic, $event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                  </button>
+                }
+                <button class="action-btn" [title]="'album.renamePhotoTitle' | translate"
+                        (click)="startRename(pic, $event)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="action-btn action-btn--danger" [title]="'album.deletePhotoTitle' | translate"
+                        (click)="onDeletePicture(pic, $event)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            }
+
+            <!-- Info overlay on hover -->
+            <div class="picture-info-overlay">
+              <span class="picture-name" [title]="pic.name">{{ trimName(pic.name) }}</span>
+              <span class="picture-meta">{{ formatSize(pic.size) }} &middot; {{ formatDate(pic.createdAt) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Lightbox -->
+@if (lightboxPic()) {
+  <div class="lightbox-backdrop" (click)="closeLightbox()">
+    <div class="lightbox-top-controls" (click)="$event.stopPropagation()">
+      <button class="lightbox-btn" [title]="'album.downloadTitle' | translate" (click)="downloadLightbox()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <button class="lightbox-btn" [title]="'album.closeTitle' | translate" (click)="closeLightbox()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    @if (lightboxHasPrev) {
+      <button class="lightbox-nav lightbox-nav--prev" [title]="'album.prevTitle' | translate"
+              (click)="navigateLightbox(-1); $event.stopPropagation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+      </button>
+    }
+    @if (lightboxHasNext) {
+      <button class="lightbox-nav lightbox-nav--next" [title]="'album.nextTitle' | translate"
+              (click)="navigateLightbox(1); $event.stopPropagation()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 18 6-6-6-6"/>
+        </svg>
+      </button>
+    }
+
+    <div class="lightbox-content" (click)="$event.stopPropagation()">
+      @if (lightboxLoading()) {
+        <div class="lightbox-loading"><div class="spinner"></div></div>
+      } @else if (lightboxUrl()) {
+        <img [src]="lightboxUrl()" [alt]="lightboxPic()!.name" class="lightbox-img" />
+      }
+      <div class="lightbox-info">
+        <span class="lightbox-name">{{ trimName(lightboxPic()!.name) }}</span>
+        <span class="lightbox-meta">
+          {{ lightboxPic()!.width }}×{{ lightboxPic()!.height }} &middot;
+          {{ formatSize(lightboxPic()!.size) }}<br>
+          {{ 'album.taken' | translate }}: {{ formatDate(lightboxPic()!.createdAt) }} &middot;
+          {{ 'album.uploaded' | translate }}: {{ formatDate(lightboxPic()!.uploadedAt) }}
+        </span>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete picture confirm modal -->
+@if (deletingPic()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-card modal-card--delete" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ 'album.deletePhotoTitle' | translate }}</h2>
+        <button class="modal-close" (click)="cancelDelete()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="delete-confirm-msg">
+          Are you sure you want to delete
+          <strong>{{ trimName(deletingPic()!.name) }}</strong>?
+          This cannot be undone.
+        </p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" (click)="cancelDelete()" [disabled]="deleteDeleting()">
+          Cancel
+        </button>
+        <button class="btn btn--danger" (click)="confirmDelete()" [disabled]="deleteDeleting()">
+          @if (deleteDeleting()) { <span class="spinner spinner--sm"></span> }
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Rename picture modal -->
+@if (renamingPicId()) {
+  <div class="modal-overlay" (click)="cancelRename()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ 'album.renamePicTitle' | translate }}</h2>
+        <button class="modal-close" (click)="cancelRename()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ 'album.renamePicLabel' | translate }}</label>
+          <input type="text" [(ngModel)]="renameValue" maxlength="40"
+                 [placeholder]="'album.renamePicPlaceholder' | translate"
+                 (keydown.enter)="submitRename()" (keydown.escape)="cancelRename()"
+                 [disabled]="renameSaving()" />
+          <span class="char-counter" [class.char-counter--warn]="renameValue.length >= 35">
+            {{ renameValue.length }}/40
+          </span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" (click)="cancelRename()" [disabled]="renameSaving()">
+          {{ 'album.renamePicCancel' | translate }}
+        </button>
+        <button class="btn btn--primary" (click)="submitRename()"
+                [disabled]="renameSaving() || !renameValue.trim()">
+          @if (renameSaving()) { <span class="spinner spinner--sm"></span> }
+          {{ 'album.renamePicSave' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

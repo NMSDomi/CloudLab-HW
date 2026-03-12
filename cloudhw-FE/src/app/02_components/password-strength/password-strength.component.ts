@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { SHARED_IMPORTS } from '../../shared.imports';
 
 export interface PasswordStrength {
   score: number;        // 0–4
@@ -18,7 +18,7 @@ export interface PasswordRule {
 @Component({
   selector: 'app-password-strength',
   standalone: true,
-  imports: [CommonModule],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './password-strength.component.html',
   styleUrls: ['./password-strength.component.css']
 })
@@ -35,21 +35,21 @@ export class PasswordStrengthComponent implements OnChanges {
 
   private evaluate(pw: string): PasswordStrength {
     const rules: PasswordRule[] = [
-      { label: 'Legalább 8 karakter',     met: pw.length >= 8 },
-      { label: 'Nagybetű (A-Z)',          met: /[A-Z]/.test(pw) },
-      { label: 'Kisbetű (a-z)',           met: /[a-z]/.test(pw) },
-      { label: 'Szám (0-9)',              met: /\d/.test(pw) },
-      { label: 'Speciális karakter',      met: /[^A-Za-z0-9]/.test(pw) },
+      { label: 'passwordStrength.minChars',  met: pw.length >= 8 },
+      { label: 'passwordStrength.uppercase', met: /[A-Z]/.test(pw) },
+      { label: 'passwordStrength.lowercase', met: /[a-z]/.test(pw) },
+      { label: 'passwordStrength.number',    met: /\d/.test(pw) },
+      { label: 'passwordStrength.special',   met: /[^A-Za-z0-9]/.test(pw) },
     ];
 
     const metCount = rules.filter(r => r.met).length;
 
     const levels: { label: string; color: string; glow: string }[] = [
-      { label: 'Nagyon gyenge', color: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' },
-      { label: 'Gyenge',        color: '#f97316', glow: 'rgba(249, 115, 22, 0.4)' },
-      { label: 'Közepes',       color: '#eab308', glow: 'rgba(234, 179, 8, 0.35)' },
-      { label: 'Erős',          color: '#22c55e', glow: 'rgba(34, 197, 94, 0.4)' },
-      { label: 'Nagyon erős',   color: '#16a34a', glow: 'rgba(22, 163, 74, 0.5)' },
+      { label: 'passwordStrength.veryWeak',  color: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' },
+      { label: 'passwordStrength.weak',      color: '#f97316', glow: 'rgba(249, 115, 22, 0.4)' },
+      { label: 'passwordStrength.medium',    color: '#eab308', glow: 'rgba(234, 179, 8, 0.35)' },
+      { label: 'passwordStrength.strong',    color: '#22c55e', glow: 'rgba(34, 197, 94, 0.4)' },
+      { label: 'passwordStrength.veryStrong',color: '#16a34a', glow: 'rgba(22, 163, 74, 0.5)' },
     ];
 
     let score: number;

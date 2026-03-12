@@ -11,7 +11,8 @@ namespace cloudhw_BE.BLL.Services;
 public class PictureService(
     IPictureRepository _pictureRepo,
     IAlbumRepository _albumRepo,
-    IAlbumService _albumService
+    IAlbumService _albumService,
+    ILogger<PictureService> _logger
     ) : IPictureService
 {
     public async Task<Picture?> GetPictureAsync(Guid id, string requestingUserId)
@@ -108,7 +109,10 @@ public class PictureService(
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to read EXIF metadata from uploaded image; proceeding without creation date.");
+        }
 
         // Strip all EXIF / IPTC / XMP metadata before storage to avoid leaking
         // GPS coordinates, device identifiers, and other privacy-sensitive data.
@@ -129,7 +133,11 @@ public class PictureService(
                 cleanImg.Save(cleanMs, new JpegEncoder());
             data = cleanMs.ToArray();
         }
-        catch { /* keep original bytes if stripping fails */ }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to strip EXIF/IPTC/XMP metadata; storing original bytes.");
+            /* keep original bytes if stripping fails */
+        }
 
         var picture = new Picture
         {
@@ -172,6 +180,20 @@ public class PictureService(
         await _albumRepo.UpdateAsync(album);
 
         return true;
+    }
+
+    public async Task<Picture?> RenamePictureAsync(Guid id, string newName, string ownerId)
+    {
+        var picture = await _pictureRepo.GetByIdAsync(id);
+        if (picture == null) return null;
+
+        var album = await _albumRepo.GetByIdAsync(picture.AlbumId);
+        if (album == null || album.OwnerId != ownerId)
+            return null;
+
+        await _pictureRepo.UpdateNameAsync(id, newName);
+        picture.Name = newName;
+        return picture;
     }
 
     private static byte[] GenerateThumbnail(byte[] originalData, int maxSize = 500)

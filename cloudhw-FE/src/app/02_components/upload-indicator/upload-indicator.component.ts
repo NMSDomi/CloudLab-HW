@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { UploadService } from '../../03_services/upload.service';
+import { SHARED_IMPORTS } from '../../shared.imports';
 
 @Component({
   selector: 'app-upload-indicator',
   standalone: true,
+  imports: [...SHARED_IMPORTS],
   template: `
     @if (uploadService.activeUpload()) {
       <div class="bg-upload-indicator">
@@ -20,7 +22,7 @@ import { UploadService } from '../../03_services/upload.service';
         </div>
         <div class="bg-upload-info">
           <span class="bg-upload-album">{{ uploadService.activeUpload()!.albumName }}</span>
-          <span class="bg-upload-detail">Uploading {{ uploadService.activeUpload()!.current }}/{{ uploadService.activeUpload()!.total }} photos</span>
+          <span class="bg-upload-detail">{{ 'upload.uploading' | translate }} {{ uploadService.activeUpload()!.current }}/{{ uploadService.activeUpload()!.total }} {{ 'upload.photos' | translate }}</span>
         </div>
       </div>
     }

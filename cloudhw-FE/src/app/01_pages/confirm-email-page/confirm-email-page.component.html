@@ -12,7 +12,7 @@
     @if (status === 'loading') {
       <div class="confirm-status">
         <span class="spinner"></span>
-        <p>Email megerősítés folyamatban...</p>
+        <p>{{ 'auth.emailConfirmInProgress' | translate }}</p>
       </div>
     }
 
@@ -23,7 +23,7 @@
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
         <p>{{ message }}</p>
-        <button class="btn-submit" (click)="goToLogin()">Bejelentkezés</button>
+        <button class="btn-submit" (click)="goToLogin()">{{ 'auth.goToLoginBtn' | translate }}</button>
       </div>
     }
 
@@ -35,7 +35,7 @@
           <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <p>{{ message }}</p>
-        <button class="btn-submit" (click)="goToLogin()">Vissza a bejelentkezéshez</button>
+        <button class="btn-submit" (click)="goToLogin()">{{ 'auth.backToLoginBtn' | translate }}</button>
       </div>
     }
   </div>

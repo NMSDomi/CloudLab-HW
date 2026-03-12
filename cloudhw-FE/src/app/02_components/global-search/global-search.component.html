@@ -10,7 +10,7 @@
         #searchInput
         class="gs-input"
         type="text"
-        placeholder="Search albums…"
+        [placeholder]="'search.placeholder' | translate"
         autocomplete="off"
         [ngModel]="query()"
         (ngModelChange)="onQueryChange($event)"
@@ -23,54 +23,82 @@
 
       <div class="gs-loading" *ngIf="loading()">
         <span class="gs-spinner"></span>
-        <span>Loading…</span>
+        <span>{{ 'search.loading' | translate }}</span>
       </div>
 
       <ng-container *ngIf="!loading()">
-        <button
-          *ngFor="let album of results(); let i = index"
-          class="gs-result-item"
-          [class.gs-result-item--active]="activeIndex() === i"
-          (click)="selectAlbum(album)"
-          (mouseenter)="activeIndex.set(i)"
-        >
-          <div class="gs-result-thumb">
-            <img *ngIf="getCoverUrl(album)" [src]="getCoverUrl(album)" [alt]="album.name" class="gs-result-thumb-img" />
-            <svg *ngIf="!getCoverUrl(album)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
-            </svg>
-          </div>
-          <div class="gs-result-info">
-            <span class="gs-result-name">{{ album.name }}</span>
-            <span class="gs-result-owner" *ngIf="album.ownerName">by {{ album.ownerName }}</span>
-          </div>
-          <div class="gs-result-badges">
-            <span class="badge badge--public" *ngIf="album.isPublic">Public</span>
-            <span class="badge badge--shared" *ngIf="isSharedWithMe(album)">Shared</span>
-            <span class="badge badge--private" *ngIf="isPrivateMine(album)">Private</span>
-          </div>
-        </button>
 
-        <div class="gs-empty" *ngIf="results().length === 0">
+        <!-- Albums section -->
+        <ng-container *ngIf="results().length > 0">
+          <div class="gs-section-label" *ngIf="userResults().length > 0">{{ 'search.albums' | translate }}</div>
+          <button
+            *ngFor="let album of results(); let i = index"
+            class="gs-result-item"
+            [class.gs-result-item--active]="activeIndex() === i"
+            (click)="selectAlbum(album)"
+            (mouseenter)="activeIndex.set(i)"
+          >
+            <div class="gs-result-thumb">
+              <img *ngIf="getCoverUrl(album)" [src]="getCoverUrl(album)" [alt]="album.name" class="gs-result-thumb-img" />
+              <svg *ngIf="!getCoverUrl(album)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
+              </svg>
+            </div>
+            <div class="gs-result-info">
+              <span class="gs-result-name">{{ album.name }}</span>
+              <span class="gs-result-owner" *ngIf="album.ownerName">{{ 'common.by' | translate }} {{ album.ownerName }}</span>
+            </div>
+            <div class="gs-result-badges">
+              <span class="badge badge--public" *ngIf="album.isPublic">{{ 'common.public' | translate }}</span>
+              <span class="badge badge--shared" *ngIf="isSharedWithMe(album)">{{ 'common.shared' | translate }}</span>
+              <span class="badge badge--private" *ngIf="isPrivateMine(album)">{{ 'common.private' | translate }}</span>
+            </div>
+          </button>
+        </ng-container>
+
+        <!-- Users section -->
+        <ng-container *ngIf="userResults().length > 0">
+          <div class="gs-section-label" *ngIf="results().length > 0">{{ 'search.users' | translate }}</div>
+          <button
+            *ngFor="let user of userResults(); let i = index"
+            class="gs-result-item"
+            [class.gs-result-item--active]="activeIndex() === results().length + i"
+            (click)="selectUser(user)"
+            (mouseenter)="activeIndex.set(results().length + i)"
+          >
+            <div class="gs-result-thumb gs-user-avatar">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+            </div>
+            <div class="gs-result-info">
+              <span class="gs-result-name">{{ user.name }}</span>
+              <span class="gs-result-owner">{{ user.email }}</span>
+            </div>
+          </button>
+        </ng-container>
+
+        <!-- Empty state -->
+        <div class="gs-empty" *ngIf="results().length === 0 && userResults().length === 0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
           </svg>
-          <span>No albums found for "{{ query() }}"</span>
+          <span>{{ 'search.noResultsPre' | translate }} "{{ query() }}"</span>
         </div>
       </ng-container>
     </div>
 
     <!-- Hint when nothing typed yet -->
     <div class="gs-hint" *ngIf="query().trim().length === 0 && !loading()">
-      Start typing to search albums…
+      {{ 'search.startTyping' | translate }}
     </div>
 
     <!-- Footer -->
     <div class="gs-footer">
-      <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
-      <span><kbd>Enter</kbd> Open</span>
-      <span><kbd>Esc</kbd> Close</span>
-      <span style="margin-left:auto"><kbd>{{ searchShortcut }}</kbd> Toggle</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd> {{ 'search.navigate' | translate }}</span>
+      <span><kbd>Enter</kbd> {{ 'search.open' | translate }}</span>
+      <span><kbd>Esc</kbd> {{ 'search.close' | translate }}</span>
+      <span style="margin-left:auto"><kbd>{{ searchShortcut }}</kbd> {{ 'search.toggle' | translate }}</span>
     </div>
   </div>
 </div>

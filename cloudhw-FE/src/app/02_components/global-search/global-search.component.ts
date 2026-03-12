@@ -10,10 +10,9 @@ import {
   AfterViewChecked,
   effect,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { Router } from '@angular/router';
-import { Subject, Subscription, of } from 'rxjs';
+import { Subject, Subscription, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { AlbumService } from '../../03_services/album.service';
 import { GlobalSearchService } from '../../03_services/global-search.service';
@@ -24,7 +23,7 @@ import { Album } from '../../04_models/album.model';
 @Component({
   selector: 'app-global-search',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [...SHARED_IMPORTS],
   templateUrl: './global-search.component.html',
   styleUrls: ['./global-search.component.css'],
 })
@@ -44,6 +43,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
   isOpen = this.searchService.isOpen;
   query = signal('');
   results = signal<Album[]>([]);
+  userResults = signal<{ id: string; name: string; email: string }[]>([]);
   loading = signal(false);
   activeIndex = signal(-1);
   coverUrls = signal<Record<string, string>>({});
@@ -58,6 +58,7 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
       if (!this.isOpen()) {
         this.query.set('');
         this.results.set([]);
+        this.userResults.set([]);
         this.activeIndex.set(-1);
       }
     }, { allowSignalWrites: true });
@@ -71,18 +72,18 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
         switchMap(q => {
           if (!q.trim()) {
             this.results.set([]);
+            this.userResults.set([]);
             this.loading.set(false);
-            return of([]);
+            return of({ albums: [] as Album[], users: [] as { id: string; name: string; email: string }[] });
           }
-          return this.albumService.searchAlbums(q).pipe(
-            catchError(() => {
-              this.loading.set(false);
-              return of([]);
-            })
-          );
+          return forkJoin({
+            albums: this.albumService.searchAlbums(q).pipe(catchError(() => of<Album[]>([]))),
+            users: this.userService.searchUsers(q).pipe(catchError(() => of<{ id: string; name: string; email: string }[]>([])))
+          });
         })
-      ).subscribe(albums => {
+      ).subscribe(({ albums, users }) => {
         this.results.set(albums);
+        this.userResults.set(users);
         this.loading.set(false);
         this.activeIndex.set(-1);
         this.loadCovers(albums);
@@ -125,8 +126,8 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      const max = this.results().length - 1;
-      this.activeIndex.set(Math.min(this.activeIndex() + 1, max));
+      const max = this.results().length + this.userResults().length - 1;
+      this.activeIndex.set(Math.min(this.activeIndex() + 1, Math.max(0, max)));
       return;
     }
 
@@ -138,9 +139,12 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
 
     if (event.key === 'Enter') {
       const idx = this.activeIndex();
-      const list = this.results();
-      if (idx >= 0 && idx < list.length) {
-        this.selectAlbum(list[idx]);
+      const albums = this.results();
+      const users = this.userResults();
+      if (idx >= 0 && idx < albums.length) {
+        this.selectAlbum(albums[idx]);
+      } else if (idx >= albums.length && idx < albums.length + users.length) {
+        this.selectUser(users[idx - albums.length]);
       }
       return;
     }
@@ -168,6 +172,11 @@ export class GlobalSearchComponent implements OnInit, OnDestroy, AfterViewChecke
   selectAlbum(album: Album) {
     this.close();
     this.router.navigate(['/album', album.id]);
+  }
+
+  selectUser(user: { id: string; name: string; email: string }) {
+    this.close();
+    this.router.navigate(['/profile', user.id]);
   }
 
   getCoverUrl(album: Album): string | null {

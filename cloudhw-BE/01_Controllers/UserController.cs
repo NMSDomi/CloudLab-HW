@@ -1,4 +1,5 @@
 ﻿using cloudhw_BE.BLL.Services.Interfaces;
+using cloudhw_BE.DAL.Context;
 using cloudhw_BE.DAL.Models;
 using cloudhw_BE.Setup;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,8 @@ public class UserController(
     UserManager<User> _userManager,
     SignInManager<User> _signInManager,
     IAuthService _authService,
-    IEmailService _emailService
+    IEmailService _emailService,
+    DataContext _dbContext
     ) : ControllerBase
 {
     /// Sets the refresh token as an HttpOnly cookie.
@@ -107,21 +109,23 @@ public class UserController(
     [Authorize(Roles = $"{RoleNames.Admin}")]
     public async Task<IActionResult> GetAllUsers()
     {
-        var users = await _userManager.Users.ToListAsync();
-        var usersWithRoles = new List<object>();
-
-        foreach (var user in users)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
-            usersWithRoles.Add(new
+        // Single query: join Users → UserRoles → Roles to avoid N+1 round-trips
+        var usersWithRoles = await (
+            from u in _userManager.Users
+            select new
             {
-                user.Id,
-                user.Email,
-                user.Name,
-                user.UserName,
-                Roles = roles.FirstOrDefault()
-            });
-        }
+                u.Id,
+                u.Email,
+                u.Name,
+                u.UserName,
+                Roles = (
+                    from ur in _dbContext.UserRoles
+                    join r  in _dbContext.Roles on ur.RoleId equals r.Id
+                    where ur.UserId == u.Id
+                    select r.Name
+                ).FirstOrDefault()
+            }
+        ).ToListAsync();
 
         return Ok(usersWithRoles);
     }
@@ -165,6 +169,19 @@ public class UserController(
         });
     }
 
+    /// <summary>
+    /// Public profile lookup — any authenticated user can fetch another user's display name.
+    /// Returns only non-sensitive fields (Id, Name). Email is intentionally omitted.
+    /// </summary>
+    [HttpGet("public/{id}")]
+    [Authorize]
+    public async Task<IActionResult> GetPublicProfile(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null) return NotFound();
+
+        return Ok(new { user.Id, user.Name });
+    }
 
     [HttpGet("me")]
     [Authorize]

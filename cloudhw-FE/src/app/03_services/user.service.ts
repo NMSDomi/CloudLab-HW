@@ -81,15 +81,17 @@ export class UserService {
     }
 
     private mapBackendUserToModel(backendUser: any): User {
+        const roleValue = backendUser.roles ?? backendUser.role;
+        const role = Array.isArray(roleValue) ? roleValue[0] : roleValue;
+
         return {
-            id: backendUser.Id || backendUser.id,
-            name: backendUser.Name || backendUser.name,
-            email: backendUser.Email || backendUser.email,
-            userName: backendUser.UserName || backendUser.userName,
-            role: backendUser.Roles || backendUser.roles || []
+            id: backendUser.id,
+            name: backendUser.name,
+            email: backendUser.email,
+            userName: backendUser.userName,
+            role
         };
     }
-
 
     updateMe(data: User) {
         return this.http.put(`${environmentUrls.users}/me`, data);
@@ -136,16 +138,16 @@ export class UserService {
 
     searchUsers(q: string): Observable<{ id: string; name: string; email: string }[]> {
         return this.http.get<any[]>(`${environmentUrls.users}/search`, { params: { q } }).pipe(
-            map(users => users.map(u => ({
-                id: u.Id ?? u.id,
-                name: u.Name ?? u.name,
-                email: u.Email ?? u.email
+            map(users => users.map(user => ({
+                id: user.id,
+                name: user.name,
+                email: user.email
             })))
         );
     }
 
     getUserById(id: string) {
-        return this.http.get<any>(`${environmentUrls.users}/${encodeURIComponent(id)}`).pipe(
+        return this.http.get<any>(`${environmentUrls.users}/public/${encodeURIComponent(id)}`).pipe(
             map(u => this.mapBackendUserToModel(u))
         );
     }

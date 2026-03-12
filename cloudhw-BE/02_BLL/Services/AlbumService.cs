@@ -134,10 +134,8 @@ public class AlbumService(
             return false;
 
         // Verify the picture actually belongs to this album
-        var pictures = await _albumRepo.GetPictureCountAsync(albumId);
-        var picture = (await _pictureRepo.GetByAlbumIdAsync(albumId))
-            .FirstOrDefault(p => p.Id == pictureId);
-        if (picture == null)
+        var picture = await _pictureRepo.GetByIdAsync(pictureId);
+        if (picture == null || picture.AlbumId != albumId)
             return false;
 
         album.CoverPictureId = pictureId;

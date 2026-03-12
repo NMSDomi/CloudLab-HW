@@ -13,8 +13,8 @@
     <!-- Toggle tabs -->
     @if (view !== 'forgot') {
       <div class="login-tabs">
-        <button class="login-tab" [class.active]="view === 'login'" (click)="switchView('login')">Sign In</button>
-        <button class="login-tab" [class.active]="view === 'register'" (click)="switchView('register')">Register</button>
+        <button class="login-tab" [class.active]="view === 'login'" (click)="switchView('login')">{{ 'auth.signIn' | translate }}</button>
+        <button class="login-tab" [class.active]="view === 'register'" (click)="switchView('register')">{{ 'auth.register' | translate }}</button>
       </div>
     }
 
@@ -32,22 +32,22 @@
     @if (view === 'login') {
       <form class="auth-form" (ngSubmit)="onLogin()">
         <div class="form-group">
-          <label for="loginEmail">Email</label>
+          <label for="loginEmail">{{ 'auth.emailLabel' | translate }}</label>
           <input
             id="loginEmail"
             type="email"
-            placeholder="you@example.com"
+            [placeholder]="'auth.emailPlaceholder' | translate"
             [(ngModel)]="loginEmail"
             name="loginEmail"
             required
           />
         </div>
         <div class="form-group">
-          <label for="loginPassword">Password</label>
+          <label for="loginPassword">{{ 'auth.passwordLabel' | translate }}</label>
           <input
             id="loginPassword"
             type="password"
-            placeholder="••••••••"
+            [placeholder]="'auth.passwordPlaceholder' | translate"
             [(ngModel)]="loginPassword"
             name="loginPassword"
             required
@@ -57,15 +57,15 @@
           @if (loading) {
             <span class="spinner"></span>
           }
-          Sign In
+          {{ 'auth.signIn' | translate }}
         </button>
         <div class="login-form__footer">
           <label class="remember-me">
             <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="remember-me__input" />
             <span class="remember-me__toggle"></span>
-            <span class="remember-me__label">Stay logged in for 30 days</span>
+            <span class="remember-me__label">{{ 'auth.stayLoggedIn' | translate }}</span>
           </label>
-          <button type="button" class="link-btn" (click)="switchView('forgot')">Elfelejtett jelszó?</button>
+          <button type="button" class="link-btn" (click)="switchView('forgot')">{{ 'auth.forgotPassword' | translate }}</button>
         </div>
       </form>
     }
@@ -74,33 +74,33 @@
     @if (view === 'register') {
       <form class="auth-form" (ngSubmit)="onRegister()">
         <div class="form-group">
-          <label for="regName">Full Name</label>
+          <label for="regName">{{ 'auth.fullNameLabel' | translate }}</label>
           <input
             id="regName"
             type="text"
-            placeholder="John Doe"
+            [placeholder]="'auth.fullNamePlaceholder' | translate"
             [(ngModel)]="registerName"
             name="registerName"
             required
           />
         </div>
         <div class="form-group">
-          <label for="regEmail">Email</label>
+          <label for="regEmail">{{ 'auth.emailLabel' | translate }}</label>
           <input
             id="regEmail"
             type="email"
-            placeholder="you@example.com"
+            [placeholder]="'auth.emailPlaceholder' | translate"
             [(ngModel)]="registerEmail"
             name="registerEmail"
             required
           />
         </div>
         <div class="form-group">
-          <label for="regPassword">Password</label>
+          <label for="regPassword">{{ 'auth.passwordLabel' | translate }}</label>
           <input
             id="regPassword"
             type="password"
-            placeholder="••••••••"
+            [placeholder]="'auth.passwordPlaceholder' | translate"
             [(ngModel)]="registerPassword"
             name="registerPassword"
             required
@@ -111,22 +111,22 @@
           @if (loading) {
             <span class="spinner"></span>
           }
-          Create Account
+          {{ 'auth.createAccount' | translate }}
         </button>
       </form>
     }
 
     <!-- Forgot Password Form -->
     @if (view === 'forgot') {
-      <h2 class="form-heading">Jelszó visszaállítás</h2>
-      <p class="form-subtext">Add meg az email címedet és küldünk egy visszaállító linket.</p>
+      <h2 class="form-heading">{{ 'auth.forgotPasswordTitle' | translate }}</h2>
+      <p class="form-subtext">{{ 'auth.forgotPasswordSubtext' | translate }}</p>
       <form class="auth-form" (ngSubmit)="onForgotPassword()">
         <div class="form-group">
-          <label for="forgotEmail">Email</label>
+          <label for="forgotEmail">{{ 'auth.emailLabel' | translate }}</label>
           <input
             id="forgotEmail"
             type="email"
-            placeholder="you@example.com"
+            [placeholder]="'auth.emailPlaceholder' | translate"
             [(ngModel)]="forgotEmail"
             name="forgotEmail"
             required
@@ -136,9 +136,9 @@
           @if (loading) {
             <span class="spinner"></span>
           }
-          Link küldése
+          {{ 'auth.sendLink' | translate }}
         </button>
-        <button type="button" class="link-btn center" (click)="switchView('login')">← Vissza a bejelentkezéshez</button>
+        <button type="button" class="link-btn center" (click)="switchView('login')">{{ 'auth.backToLogin' | translate }}</button>
       </form>
     }
   </div>

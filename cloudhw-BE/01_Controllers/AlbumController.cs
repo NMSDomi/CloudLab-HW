@@ -1,6 +1,9 @@
 using cloudhw_BE.BLL.Services.Interfaces;
+using cloudhw_BE.Controllers.DTOs;
+using cloudhw_BE.DAL.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IO.Compression;
 using System.Security.Claims;
 
 namespace cloudhw_BE.Controllers;
@@ -12,11 +15,6 @@ public class AlbumController(
     IAlbumService _albumService
     ) : ControllerBase
 {
-    public record CreateAlbumRequest(string Name, string? Description, bool IsPublic);
-    public record UpdateAlbumRequest(string Name, string? Description, bool IsPublic);
-    public record ShareAlbumRequest(string UserId);
-    public record SetCoverRequest(Guid PictureId);
-
     [HttpGet("my")]
     public async Task<IActionResult> GetMyAlbums()
     {
@@ -164,6 +162,57 @@ public class AlbumController(
         return Ok();
     }
 
+    /// <summary>
+    /// Streams all pictures in an album as a ZIP archive.
+    /// Accessible to album owner, users with whom the album is shared, and anyone for public albums.
+    /// </summary>
+    [HttpGet("{id}/download")]
+    [AllowAnonymous]
+    public async Task<IActionResult> DownloadAlbumZip(Guid id, [FromServices] IPictureRepository pictureRepo)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var album = await _albumService.GetAlbumAsync(id, userId ?? string.Empty);
+        if (album == null) return NotFound();
+
+        var pictures = await pictureRepo.GetWithDataByAlbumIdAsync(id);
+        if (pictures.Count == 0)
+            return NotFound("Album has no pictures.");
+
+        var ms = new MemoryStream();
+        using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var usedNames = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pic in pictures)
+            {
+                var safeName = Path.GetFileName(pic.Name);
+                if (string.IsNullOrWhiteSpace(safeName)) safeName = pic.Id.ToString();
+
+                // Deduplicate file names within the ZIP
+                if (usedNames.TryGetValue(safeName, out var count))
+                {
+                    usedNames[safeName] = count + 1;
+                    var ext = Path.GetExtension(safeName);
+                    var basePart = Path.GetFileNameWithoutExtension(safeName);
+                    safeName = $"{basePart} ({count + 1}){ext}";
+                }
+                else
+                {
+                    usedNames[safeName] = 1;
+                }
+
+                // Images are already compressed — store without re-compressing
+                var entry = archive.CreateEntry(safeName, CompressionLevel.NoCompression);
+                using var entryStream = entry.Open();
+                await entryStream.WriteAsync(pic.Data);
+            }
+        }
+
+        ms.Position = 0;
+        var zipFileName = $"{Path.GetInvalidFileNameChars().Aggregate(album.Name, (s, c) => s.Replace(c, '_'))}.zip";
+        return File(ms, "application/zip", zipFileName);
+    }
+
     [HttpGet("{id}/cover")]
     [AllowAnonymous]
     public async Task<IActionResult> GetCoverThumbnail(Guid id)
@@ -196,4 +245,25 @@ public class AlbumController(
         PictureCount = a.Pictures.Count,
         a.CoverPictureId
     };
+
+    /// <summary>
+    /// Returns the list of users an album is shared with.
+    /// Avoids fetching the full album object just to read share recipients.
+    /// </summary>
+    [HttpGet("{id}/shares")]
+    public async Task<IActionResult> GetAlbumShares(Guid id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var album = await _albumService.GetAlbumAsync(id, userId);
+        if (album == null) return NotFound();
+
+        return Ok(album.SharedWith.Select(s => new
+        {
+            s.UserId,
+            UserName = s.User?.Name,
+            s.SharedAt
+        }));
+    }
 }

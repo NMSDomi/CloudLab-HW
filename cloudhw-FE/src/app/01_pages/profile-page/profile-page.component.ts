@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { SHARED_IMPORTS } from '../../shared.imports';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../03_services/user.service';
 import { AlbumService } from '../../03_services/album.service';
@@ -14,7 +13,7 @@ import { PasswordStrengthComponent } from '../../02_components/password-strength
 @Component({
   selector: 'app-profile-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShareAlbumModalComponent, PasswordStrengthComponent],
+  imports: [...SHARED_IMPORTS, ShareAlbumModalComponent, PasswordStrengthComponent],
   templateUrl: './profile-page.component.html',
   styleUrls: ['./profile-page.component.css']
 })
@@ -102,7 +101,7 @@ export class ProfilePageComponent implements OnInit, OnDestroy {
       this.sharedCoverUrls.set({});
 
       const currentUser = this.userService.currentUser();
-      if (currentUser && currentUser.id === id) {
+      if (currentUser && (id === 'me' || currentUser.id === id)) {
         this.isOwnProfile.set(true);
         this.profileUser.set(currentUser);
         this.editName = currentUser.name;
