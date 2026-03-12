@@ -46,8 +46,8 @@
         <img
           class="header__lang-flag"
           [src]="langService.currentLang() === 'en'
-            ? 'https://flagsapi.com/GB/flat/32.png'
-            : 'https://flagsapi.com/HU/flat/32.png'"
+            ? 'assets/flags/gb.svg'
+            : 'assets/flags/hu.svg'"
           [alt]="langService.currentLang() === 'en' ? 'EN' : 'HU'"
           title="langService.currentLang() === 'en' ? 'English' : 'Magyar'"
         />
@@ -55,7 +55,7 @@
       <div class="header__lang-menu">
         <button class="header__lang-option" [class.header__lang-option--active]="langService.currentLang() === 'en'"
           (click)="langService.switchLang('en'); langDropdownOpen = false">
-          <img class="header__lang-flag" src="https://flagsapi.com/GB/flat/32.png" alt="EN" />
+          <img class="header__lang-flag" src="assets/flags/gb.svg" alt="EN" />
           <span>English</span>
           @if (langService.currentLang() === 'en') {
             <svg class="header__lang-check" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -63,7 +63,7 @@
         </button>
         <button class="header__lang-option" [class.header__lang-option--active]="langService.currentLang() === 'hu'"
           (click)="langService.switchLang('hu'); langDropdownOpen = false">
-          <img class="header__lang-flag" src="https://flagsapi.com/HU/flat/32.png" alt="HU" />
+          <img class="header__lang-flag" src="assets/flags/hu.svg" alt="HU" />
           <span>Magyar</span>
           @if (langService.currentLang() === 'hu') {
             <svg class="header__lang-check" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
