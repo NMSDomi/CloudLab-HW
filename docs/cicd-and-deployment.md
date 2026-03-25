@@ -9,7 +9,7 @@ This document describes the build and deployment pipeline.
 Deployment is fully automated via GitHub Actions. Pushing to the `release` branch triggers the workflow in `.github/workflows/release.yml`, which:
 
 1. Builds Docker images for both BE and FE
-2. Pushes images to container registries
+2. Pushes images to Google Container Registry (GCR)
 3. Renders `app.yaml` files with secrets
 4. Deploys both services to **Google App Engine (Flex)**
 
@@ -32,11 +32,10 @@ Any push to the `release` branch triggers the full pipeline. There is no manual 
 
 ### `build-and-push`
 
-Builds Docker images and pushes them to two registries:
+Builds Docker images and pushes them to Google Container Registry:
 
 | Registry | Purpose |
 |---|---|
-| `ghcr.io` (GitHub Container Registry) | Image archive / backup |
 | `gcr.io` (Google Container Registry) | Used by App Engine for deployment |
 
 Images are tagged with the **git commit SHA** (`${{ github.sha }}`), ensuring every deployment is traceable to an exact commit.
@@ -62,7 +61,7 @@ The rendered `*.rendered.yaml` files contain plain-text secrets and are **never 
 | Service | App Engine service name | Port |
 |---|---|---|
 | Backend (.NET) | `api` | 8080 |
-| Frontend (nginx) | `default` | 80 |
+| Frontend (nginx) | `default` | 8080 |
 
 Both use `runtime: custom` (Docker-based) with `env: flex`.
 

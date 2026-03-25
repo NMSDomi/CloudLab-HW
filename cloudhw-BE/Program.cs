@@ -15,7 +15,7 @@ builder.SetupSwagger();
 builder.SetupServices();
 builder.SetupDatabase();
 builder.SetupCors();
-builder.SetupRateLimiting();
+// builder.SetupRateLimiting(); // Disabled for load testing
 
 var app = builder.Build();
 
@@ -46,7 +46,7 @@ _ = Task.Run(async () =>
 
 app.ConfigureSwagger();
 app.ConfigureCors();
-app.UseRateLimiter();
+// app.UseRateLimiter(); // Disabled for load testing
 
 // Security response headers
 app.Use(async (context, next) =>

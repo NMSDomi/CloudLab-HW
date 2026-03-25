@@ -9,7 +9,7 @@ This document describes the overall structure and design of the backend and fron
 ```
 CloudLab-HW/
   cloudhw-BE/          ← .NET 8 Web API
-  cloudhw-FE/          ← Angular 19+ SPA
+  cloudhw-FE/          ← Angular 18+ SPA
   docker-compose.cloudhw.yml    ← full stack (production-like)
   docker-compose.development.yml ← infra only (DB + pgAdmin)
   .env.example         ← environment variable template

@@ -85,6 +85,9 @@ Write operations (upload, delete picture, update album, share, set cover) requir
 | Share | `POST /api/album/{id}/share` | Required | Owner only |
 | Unshare | `DELETE /api/album/{id}/share/{userId}` | Required | Owner only |
 | Set cover | `PUT /api/album/{id}/cover` | Required | Owner only |
+| Get cover thumbnail | `GET /api/album/{id}/cover` | None | Access-controlled |
+| Download album ZIP | `GET /api/album/{id}/download` | None | Access-controlled |
+| List share recipients | `GET /api/album/{id}/shares` | Required | Owner/shared user with access |
 
 ---
 
@@ -99,6 +102,7 @@ Write operations (upload, delete picture, update album, share, set cover) requir
 | Get thumbnail | `GET /api/picture/{id}/thumbnail` | None | Access-controlled |
 | Upload | `POST /api/picture/album/{albumId}` | Required | Album owner only |
 | Delete | `DELETE /api/picture/{id}` | Required | Album owner only |
+| Rename | `PATCH /api/picture/{id}/name` | Required | Album owner only, 1–40 chars |
 
 ---
 
@@ -119,9 +123,10 @@ Write operations (upload, delete picture, update album, share, set cover) requir
    - Priority: DateTimeOriginal → DateTimeDigitized → DateTime
    - Supports standard (yyyy:MM:dd HH:mm:ss) and non-standard date formats
    - Falls back to null if no valid EXIF date found
-5. Thumbnail generated: JPEG, max 500px on longest side, quality 90
-6. Both full image and thumbnail stored in DB
-7. Album.Size updated (+=)
+5. EXIF/IPTC/XMP metadata is stripped from stored bytes (privacy hardening)
+6. Thumbnail generated: JPEG, max 500px on longest side, quality 90
+7. Both full image and thumbnail stored in DB
+8. Album.Size updated (+=)
 ```
 
 ---

@@ -20,8 +20,8 @@ This document describes all environment variables used in the project, where the
 | `ADMIN_PASSWORD` | Backend | Seed admin account password |
 | `ADMIN_NAME` | Backend | Seed admin display name |
 | `FRONTEND_URL` | Backend | Allowed CORS origin |
-| `ASPNETCORE_AllowedHosts` | Backend | ~~Host-header allowlist~~ — set to `*` in `appsettings.json`; this env var is no longer needed and has no effect unless explicitly set to override | // TODO
-| `BACKEND_URL` | Frontend | API base URL used by the browser |
+| `ASPNETCORE_AllowedHosts` | Backend | Optional ASP.NET host allowlist override (maps to `AllowedHosts` config); defaults to `*` in `appsettings.json` |
+| `BACKEND_URL` | Frontend | nginx proxy target for `/api/*` (used in `nginx.conf` via `envsubst`) |
 | `SMTP_HOST` | Backend | SMTP server host (leave empty to log emails to console) |
 | `SMTP_PORT` | Backend | SMTP server port (default `587`) |
 | `SMTP_USER` | Backend | SMTP username |
@@ -61,7 +61,7 @@ cloudhw-FE/src/assets/env.js          ← BACKEND_URL hardcoded to '/'
 cloudhw-FE/proxy.conf.json            ← proxies /api → https://localhost:7174
 ```
 
-`env.js` is loaded at runtime by `index.html` via `<script src="assets/env.js">` and sets `window.env.BACKEND_URL`. Because `ng serve` uses the proxy, the browser only needs `BACKEND_URL = '/'` — Angular's dev server forwards all `/api` calls to the local backend automatically.
+`env.js` is loaded at runtime by `index.html` via `<script src="assets/env.js">` and sets `window.env.BACKEND_URL`. In this project it is intentionally `/` (relative path), so the browser calls `/api/*` and nginx/dev-proxy forwards to the backend.
 
 ---
 
@@ -80,11 +80,11 @@ All services run as containers. Variables come from the `.env` file in the proje
 
 **Frontend at runtime:** The FE `Dockerfile` runs `envsubst` at container start:
 ```
-env.template.js  (contains ${BACKEND_URL})
+nginx.conf template  (contains ${BACKEND_URL} in proxy_pass)
     │
     ▼  envsubst (reads BACKEND_URL from container env)
     │
-env.js           (served to browser with the real URL)
+nginx default.conf (active runtime proxy target)
 ```
 
 **Setup:**

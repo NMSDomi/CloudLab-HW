@@ -86,7 +86,7 @@ Always returns 200 regardless of whether the email exists (prevents user enumera
 6. Generates refresh token (cryptographically random, stored in DB)
 7. Returns:
    - Access token in response body
-   - Refresh token as HttpOnly cookie (SameSite=Lax, Secure on HTTPS)
+   - Refresh token as HttpOnly cookie (`Path=/api/user`, `SameSite=Lax`, `Secure` in production)
 ```
 
 ### Token lifetimes
@@ -94,7 +94,11 @@ Always returns 200 regardless of whether the email exists (prevents user enumera
 | Token | Normal session | Remember Me |
 |---|---|---|
 | JWT access token | 15 minutes | 15 minutes |
-| Refresh token | 1 day | 30 days |
+| Refresh token (server-side validity) | 1 day | 30 days |
+
+Cookie lifetime behavior:
+- `rememberMe = true` → persistent cookie (`Expires` set)
+- `rememberMe = false` → session cookie (removed when browser session ends)
 
 ### Account lockout
 
@@ -169,6 +173,27 @@ Requires the current password to be correct.
 
 ---
 
+## Profile Update + Email Change
+
+```
+PUT /api/user/me  { name, email }
+```
+
+- Name change is applied immediately.
+- If email changes, backend sends a confirmation link to the new email and applies the email change only after confirmation.
+
+Email confirmation endpoint for this flow:
+```
+GET /api/user/confirm-email-change?userId=...&newEmail=...&token=...
+```
+
+There is also an authenticated public-profile endpoint used by sharing features:
+```
+GET /api/user/public/{id}
+```
+
+---
+
 ## Admin Operations
 
 All require `Admin` role (`Authorization: Bearer <token>` with Admin claim):
@@ -178,6 +203,7 @@ All require `Admin` role (`Authorization: Bearer <token>` with Admin claim):
 | `GET /api/user/all` | List all users |
 | `GET /api/user/{id}` | Get user by ID |
 | `PUT /api/user/{id}/role` | Change a user's role (`Admin` / `Editor`) |
+| `DELETE /api/user/{id}` | Delete user (cannot delete self or last remaining admin) |
 
 ---
 
