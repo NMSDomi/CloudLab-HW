@@ -143,7 +143,7 @@ public class PictureService(
         {
             Id = Guid.NewGuid(),
             Name = name,
-            CreatedAt = createdAt,
+            CreatedAt = createdAt ?? uploadedAt,
             UploadedAt = uploadedAt,
             Size = data.Length,
             ContentType = contentType,
