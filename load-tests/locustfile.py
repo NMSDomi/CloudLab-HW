@@ -202,6 +202,7 @@ class PhotoAlbumUser(HttpUser):
     token_expires_at: float = 0.0
     album_ids: list[str]
     picture_ids: list[str]
+    album_pictures: dict[str, list[str]]  # album_id -> [picture_ids]
     other_user_ids: list[str]
 
     # -----------------------------------------------------------------------
@@ -211,6 +212,7 @@ class PhotoAlbumUser(HttpUser):
     def on_start(self) -> None:
         self.album_ids      = []
         self.picture_ids    = []
+        self.album_pictures = {}
         self.other_user_ids = []
         creds          = random.choice(TEST_USERS)
         self.email     = creds["email"]
@@ -471,6 +473,9 @@ class PhotoAlbumUser(HttpUser):
                 pid = p.get("id")
                 if pid and pid not in self.picture_ids:
                     self.picture_ids.append(pid)
+                    self.album_pictures.setdefault(album_id, [])
+                    if pid not in self.album_pictures[album_id]:
+                        self.album_pictures[album_id].append(pid)
 
     @task(5)
     def get_thumbnails(self) -> None:
@@ -534,6 +539,8 @@ class PhotoAlbumUser(HttpUser):
             pid = resp.json().get("id")
             if pid:
                 self.picture_ids.append(pid)
+                self.album_pictures.setdefault(album_id, [])
+                self.album_pictures[album_id].append(pid)
             return pid
         return None
 
@@ -550,11 +557,16 @@ class PhotoAlbumUser(HttpUser):
 
     @task(1)
     def set_album_cover(self) -> None:
-        if not self.token or not self.album_ids or not self.picture_ids:
+        if not self.token:
             return
+        albums_with_pictures = [aid for aid, pids in self.album_pictures.items() if pids]
+        if not albums_with_pictures:
+            return
+        album_id = random.choice(albums_with_pictures)
+        picture_id = random.choice(self.album_pictures[album_id])
         self.client.put(
-            f"/api/album/{random.choice(self.album_ids)}/cover",
-            json={"pictureId": random.choice(self.picture_ids)},
+            f"/api/album/{album_id}/cover",
+            json={"pictureId": picture_id},
             headers=self._auth,
             name="/api/album/{id}/cover [PUT]",
         )
@@ -575,6 +587,10 @@ class PhotoAlbumUser(HttpUser):
         if not self.token or len(self.picture_ids) < 10:
             return
         pic_id = self.picture_ids.pop(0)
+        for pids in self.album_pictures.values():
+            if pic_id in pids:
+                pids.remove(pic_id)
+                break
         self.client.delete(
             f"/api/picture/{pic_id}",
             headers=self._auth,
@@ -591,20 +607,20 @@ class ScalingDemoShape(LoadTestShape):
     Staged ramp pattern (~15 min) to demonstrate both scale-out and scale-in.
 
     Phase 1  0–2 min    10 users   warm-up          1 instance sufficient
-    Phase 2  2–5 min    50 users   moderate load  → 2nd instance spins up
-    Phase 3  5–9 min   100 users   peak load      → 3–5 instances active
-    Phase 4  9–12 min   20 users   decreasing     → scale-in begins
+    Phase 2  2–5 min    30 users   moderate load  → 2nd instance spins up
+    Phase 3  5–9 min    50 users   peak load      → 2–3 instances active
+    Phase 4  9–12 min   15 users   decreasing     → scale-in begins
     Phase 5 12–15 min    5 users   cool-down      → back to 1 instance
 
-    User split at 100 VUs: ~25 RegisteringUser + ~75 PhotoAlbumUser
+    User split at 50 VUs: ~12 RegisteringUser + ~38 PhotoAlbumUser
     """
 
     stages = [
         {"duration":  120, "users":  10, "spawn_rate":  2},
-        {"duration":  300, "users":  50, "spawn_rate":  8},
-        {"duration":  540, "users": 100, "spawn_rate": 10},
-        {"duration":  720, "users":  20, "spawn_rate": 20},
-        {"duration":  900, "users":   5, "spawn_rate": 10},
+        {"duration":  300, "users":  30, "spawn_rate":  5},
+        {"duration":  540, "users":  50, "spawn_rate":  8},
+        {"duration":  720, "users":  15, "spawn_rate": 10},
+        {"duration":  900, "users":   5, "spawn_rate":  5},
     ]
 
     def tick(self) -> tuple[int, float] | None:
