@@ -55,6 +55,10 @@ Push a `release` branchre → GitHub Actions automatikusan buildeli a Docker ima
 
 ## Load testing & skálázódás demonstrálása
 
-A [`load-tests/`](load-tests/) könyvtár tartalmaz egy Locust-alapú terheléstesztet, amely automatikusan bemutatja a horizontális skálázódást (~15 perc, 1→5 instance, majd visszaskálázás).
+A [`load-tests/`](load-tests/) könyvtár tartalmaz egy Locust-alapú terheléstesztet, amely automatikusan bemutatja a horizontális skálázódást (~15 perc, 1→4 instance, majd visszaskálázás).
 
-Részletes útmutató: [docs/load-testing.md](docs/load-testing.md)
+| Dokumentum | Leírás |
+|---|---|
+| [docs/load-testing.md](docs/load-testing.md) | Lépésről lépésre: VM setup, seed, futtatás, eredmények gyűjtése |
+| [docs/load_testing_setting_and_documentation.md](docs/load_testing_setting_and_documentation.md) | Terheléspróba jegyzőkönyv: skálázás konfiguráció, tesztelt végpontok, eredmények, tanulságok |
+| [load-tests/locustfile.py](load-tests/locustfile.py) | Locust teszt forráskódja (két felhasználói modell) |
