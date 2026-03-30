@@ -1,4 +1,5 @@
 ﻿using cloudhw_BE.DAL.Models;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,11 +7,13 @@ namespace cloudhw_BE.DAL.Context;
 public class DataContext(
     DbContextOptions<DataContext> options,
     ISystemContext _systemContext
-    ) : IdentityDbContext<User>(options)
+    ) : IdentityDbContext<User>(options), IDataProtectionKeyContext
 {
     public DbSet<Album> Albums => Set<Album>();
     public DbSet<Picture> Pictures => Set<Picture>();
     public DbSet<AlbumShare> AlbumShares => Set<AlbumShare>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -1,6 +1,7 @@
 using Backend.Setup;
 using cloudhw_BE.DAL.Context;
 using cloudhw_BE.Setup;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,9 @@ builder.Services.AddSingleton<ISystemContext, SystemContext>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<DataContext>();
 
 builder.SetupAuth();
 builder.SetupSwagger();
