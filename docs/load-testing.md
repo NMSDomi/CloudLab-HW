@@ -153,7 +153,7 @@ The `cloudhw-BE/app.yaml` is already configured for demonstration scaling:
 ```yaml
 automatic_scaling:
   min_num_instances: 1
-  max_num_instances: 5
+  max_num_instances: 4
   cool_down_period_sec: 60        # re-evaluate scaling every 60 s
   cpu_utilization:
     target_utilization: 0.4       # scale out above 40% average CPU
