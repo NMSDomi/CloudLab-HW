@@ -1,0 +1,12 @@
+project_id                   = "project-ae5e92ba-7efb-4a08-959"
+region                       = "europe-west1"
+app_engine_location          = "europe-west"
+artifact_registry_repository = "cloudhw"
+cloud_sql_instance_name      = "cloudhw-postgres"
+cloud_sql_tier               = "db-f1-micro"
+cloud_sql_disk_size_gb       = 20
+cloud_sql_availability_type  = "ZONAL"
+postgres_db                  = "cloudhw"
+postgres_user                = "postgres"
+postgres_password            = "example"
+deletion_protection          = true

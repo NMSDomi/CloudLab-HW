@@ -31,7 +31,12 @@ This document describes all environment variables used in the project, where the
 | `PGADMIN_DEFAULT_PASSWORD` | pgAdmin | pgAdmin login password |
 | `GCP_SA_KEY` | CI/CD | Google Cloud service account JSON key |
 | `GCP_PROJECT_ID` | CI/CD | Google Cloud project ID |
-| `GCP_CLOUDSQL_CONNECTION_NAME` | Backend (GCP) | Cloud SQL instance connection name (e.g. `project:region:instance`) — used as the Unix socket path in `POSTGRES_HOST` |
+| `GCP_REGION` | CI/CD / Terraform | Primary GCP region (e.g. `europe-west1`) |
+| `GCP_APP_ENGINE_LOCATION` | Terraform | App Engine location id (e.g. `europe-west`) |
+| `GCP_ARTIFACT_REGISTRY_REPOSITORY` | Terraform / CI/CD | Artifact Registry repository id |
+| `GCP_CLOUDSQL_INSTANCE_NAME` | Terraform | Cloud SQL instance name |
+| `GCP_CLOUDSQL_CONNECTION_NAME` | Backend (GCP) | Cloud SQL instance connection name (e.g. `project:region:instance`) — injected from Terraform output at deploy time |
+| `TF_STATE_BUCKET` | CI/CD / Terraform | GCS bucket used as the remote Terraform state backend |
 
 ---
 
@@ -104,11 +109,14 @@ All services use `restart: unless-stopped` — they restart on crash but stay st
 
 Triggered automatically on push to the `release` branch via `.github/workflows/release.yml`.
 
-Variables are stored as **GitHub repository secrets** (Settings → Secrets and variables → Actions).
+Variables are stored as **GitHub repository secrets** (Settings → Secrets and variables → Actions), while infrastructure values are produced by Terraform.
 
 ```
 GitHub Repository Secrets
-  └─ .github/workflows/release.yml   ← reads secrets, sets them as workflow env vars
+  └─ .github/workflows/release.yml
+       ├─ terraform apply in infra/terraform
+       │    ├─ creates/updates App Engine, Artifact Registry, Cloud SQL
+       │    └─ exposes Terraform outputs used later in deploy
        ├─ envsubst < cloudhw-BE/app.yaml > app.rendered.yaml
        │     └─ cloudhw-BE/app.yaml  ← contains ${VAR} placeholders → filled at deploy time
        └─ envsubst < cloudhw-FE/app.yaml > app.rendered.yaml
@@ -121,7 +129,6 @@ The rendered `app.rendered.yaml` files are passed to `gcloud app deploy` and nev
 
 | Secret | Notes |
 |---|---|
-| `POSTGRES_HOST` | Cloud SQL private IP or proxy host |
 | `POSTGRES_USER` | |
 | `POSTGRES_PASSWORD` | |
 | `POSTGRES_DB` | |
@@ -136,12 +143,18 @@ The rendered `app.rendered.yaml` files are passed to `gcloud app deploy` and nev
 | `BACKEND_URL` | e.g. `https://api.yourdomain.com/` |
 | `GCP_SA_KEY` | Full service account JSON (base64 not needed, raw JSON) |
 | `GCP_PROJECT_ID` | |
-| `GCP_CLOUDSQL_CONNECTION_NAME` | e.g. `project:region:instance` |
+| `GCP_REGION` | e.g. `europe-west1` |
+| `GCP_APP_ENGINE_LOCATION` | e.g. `europe-west` |
+| `GCP_ARTIFACT_REGISTRY_REPOSITORY` | e.g. `cloudhw` |
+| `GCP_CLOUDSQL_INSTANCE_NAME` | e.g. `cloudhw-postgres` |
+| `TF_STATE_BUCKET` | GCS bucket name for Terraform remote state |
 | `SMTP_HOST` | Optional — leave empty to log emails to console |
 | `SMTP_PORT` | Optional |
 | `SMTP_USER` | Optional |
 | `SMTP_PASSWORD` | Optional |
 | `SMTP_FROM` | Optional |
+
+`POSTGRES_HOST` and `GCP_CLOUDSQL_CONNECTION_NAME` are derived from Terraform outputs during the workflow, so they no longer need to be stored as GitHub secrets.
 
 ---
 
@@ -151,4 +164,4 @@ The rendered `app.rendered.yaml` files are passed to `gcloud app deploy` and nev
 |---|---|---|
 | **Local dev** | `launchSettings.json` | `env.js` (hardcoded) + `proxy.conf.json` |
 | **Docker** | `.env` → compose → container env | `.env` → compose → `envsubst` → `env.js` at runtime |
-| **Cloud (GCP)** | GitHub secrets → `app.yaml` → App Engine env | GitHub secrets → `app.yaml` → App Engine env → `envsubst` → `env.js` at runtime |
+| **Cloud (GCP)** | GitHub secrets + Terraform outputs → `app.yaml` → App Engine env | GitHub secrets → `app.yaml` → App Engine env → `envsubst` → `env.js` at runtime |

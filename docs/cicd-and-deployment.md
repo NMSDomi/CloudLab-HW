@@ -8,10 +8,11 @@ This document describes the build and deployment pipeline.
 
 Deployment is fully automated via GitHub Actions. Pushing to the `release` branch triggers the workflow in `.github/workflows/release.yml`, which:
 
-1. Builds Docker images for both BE and FE
-2. Pushes images to Google Container Registry (GCR)
-3. Renders `app.yaml` files with secrets
-4. Deploys both services to **Google App Engine (Flex)**
+1. Applies the Terraform infrastructure in `infra/terraform`
+2. Builds Docker images for both BE and FE
+3. Pushes images to Artifact Registry
+4. Renders `app.yaml` files with secrets and Terraform outputs
+5. Deploys both services to **Google App Engine (Flex)**
 
 ---
 
@@ -30,27 +31,47 @@ Any push to the `release` branch triggers the full pipeline. There is no manual 
 
 ## Jobs
 
+### `terraform-apply`
+
+Creates or updates the managed Google Cloud infrastructure:
+
+| Resource group | Purpose |
+|---|---|
+| App Engine application | Hosts the frontend and backend services |
+| Artifact Registry | Stores Docker images for deploy |
+| Cloud SQL PostgreSQL | Persistent production database |
+| SQL database + SQL user | Application-level database access |
+| Required Google APIs | Enables the managed services used by the stack |
+
+The workflow exports Terraform outputs and passes them into later jobs. Most importantly:
+
+- `artifact_registry_repository_url`
+- `cloud_sql_connection_name`
+- `cloud_sql_socket_host`
+
+Terraform state is stored remotely in a GCS bucket configured through the `TF_STATE_BUCKET` GitHub secret, so each workflow run sees the same infrastructure state.
+
 ### `build-and-push`
 
-Builds Docker images and pushes them to Google Container Registry:
+Builds Docker images and pushes them to Artifact Registry:
 
 | Registry | Purpose |
 |---|---|
-| `gcr.io` (Google Container Registry) | Used by App Engine for deployment |
+| `REGION-docker.pkg.dev` (Artifact Registry) | Used by App Engine for deployment |
 
 Images are tagged with the **git commit SHA** (`${{ github.sha }}`), ensuring every deployment is traceable to an exact commit.
 
 ### `deploy`
 
-Depends on `build-and-push`. Runs in the `production` GitHub environment (which gates access to production secrets).
+Depends on `terraform-apply` and `build-and-push`. Runs in the `production` GitHub environment (which gates access to production secrets).
 
 Steps:
 1. Authenticates to Google Cloud using `GCP_SA_KEY`
 2. Sets up the `gcloud` CLI
 3. Renders `cloudhw-BE/app.yaml` via `envsubst` → `app.rendered.yaml`
-4. Deploys BE to App Engine using the GCR image from the previous job
+4. Deploys BE to App Engine using the Artifact Registry image from the previous job
 5. Renders `cloudhw-FE/app.yaml` via `envsubst` → `app.rendered.yaml`
-6. Deploys FE to App Engine using the GCR image
+6. Deploys FE to App Engine using the Artifact Registry image
 
 The rendered `*.rendered.yaml` files contain plain-text secrets and are **never committed** — they exist only during the workflow run.
 
@@ -87,6 +108,13 @@ GitHub Secrets
 
 See [environment-variables.md](environment-variables.md) for the full variable reference.
 
+The Cloud SQL connection values are now injected from Terraform outputs during deploy:
+
+```text
+terraform output cloud_sql_connection_name -> GCP_CLOUDSQL_CONNECTION_NAME
+terraform output cloud_sql_socket_host     -> POSTGRES_HOST
+```
+
 ---
 
 ## Frontend Runtime Configuration
@@ -115,6 +143,8 @@ The connection string is built by `SystemContext.GetConnectionString()` from `PO
 
 Migrations are applied automatically at backend startup via `ApplyMigrationsAsync()` in `Program.cs`.
 
+The Cloud SQL instance itself is provisioned by Terraform, so the database server lifecycle is part of the repository's Infrastructure-as-Code definition.
+
 ---
 
 ## Deploying Manually
@@ -126,13 +156,20 @@ If you need to deploy without pushing to `release` (e.g. hotfix):
 gcloud auth login
 gcloud config set project YOUR_PROJECT_ID
 
+# Provision / update infrastructure
+cd infra/terraform
+terraform init -backend-config="bucket=YOUR_TF_STATE_BUCKET" -backend-config="prefix=cloudhw/release"
+terraform apply
+cd ../..
+
 # Render and deploy BE
-export POSTGRES_HOST=... # set all vars
+export POSTGRES_HOST="$(terraform -chdir=infra/terraform output -raw cloud_sql_socket_host)"
+export GCP_CLOUDSQL_CONNECTION_NAME="$(terraform -chdir=infra/terraform output -raw cloud_sql_connection_name)"
 envsubst < cloudhw-BE/app.yaml > cloudhw-BE/app.rendered.yaml
-gcloud app deploy cloudhw-BE/app.rendered.yaml --image-url=gcr.io/PROJECT/cloudhw-be:TAG
+gcloud app deploy cloudhw-BE/app.rendered.yaml --image-url=REGION-docker.pkg.dev/PROJECT/REPO/cloudhw-be:TAG
 
 # Render and deploy FE
 export BACKEND_URL=https://api.yourdomain.com/
 envsubst < cloudhw-FE/app.yaml > cloudhw-FE/app.rendered.yaml
-gcloud app deploy cloudhw-FE/app.rendered.yaml --image-url=gcr.io/PROJECT/cloudhw-fe:TAG
+gcloud app deploy cloudhw-FE/app.rendered.yaml --image-url=REGION-docker.pkg.dev/PROJECT/REPO/cloudhw-fe:TAG
 ```

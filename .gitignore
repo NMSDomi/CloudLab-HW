@@ -27,6 +27,18 @@ node_modules/
 # Docker override (may contain local secrets)
 docker-compose.override.yml
 
+# Terraform local state / overrides
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+infra/terraform/terraform.tfvars
+infra/terraform/*.auto.tfvars
+
 # Local implementation ideas (private planning docs)
 .blueprints/
 

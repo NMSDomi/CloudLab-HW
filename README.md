@@ -14,7 +14,8 @@
 
 - **Backend & Frontend:** Google App Engine (Flex) — Docker-alapú custom runtime
 - **Adatbázis:** Google Cloud SQL (PostgreSQL)
-- **CI/CD:** GitHub Actions — push a `release` branchre → build → deploy
+- **IaC:** Terraform
+- **CI/CD:** GitHub Actions — push a `release` branchre → Terraform apply → build → deploy
 
 ## Specifikáció
 
@@ -51,7 +52,9 @@ Környezeti változók: lásd [.env.example](.env.example).
 
 ## Deploy
 
-Push a `release` branchre → GitHub Actions automatikusan buildeli a Docker image-eket, `envsubst`-tal rendereli az `app.yaml` fájlokat GitHub Secrets-ből, majd `gcloud app deploy`-jal kitelepíti mindkét service-t (backend: `api`, frontend: `default`).
+Push a `release` branchre → GitHub Actions előbb `terraform apply`-jal szinkronizálja a GCP infrastruktúrát, utána buildeli a Docker image-eket, `envsubst`-tal rendereli az `app.yaml` fájlokat, majd `gcloud app deploy`-jal kitelepíti mindkét service-t (backend: `api`, frontend: `default`).
+
+IaC dokumentáció: [docs/iac.md](docs/iac.md)
 
 ## Load testing & skálázódás demonstrálása
 
