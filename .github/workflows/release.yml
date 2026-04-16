@@ -10,11 +10,6 @@ jobs:
     name: Provision Infrastructure
     runs-on: ubuntu-latest
 
-    outputs:
-      artifact_registry_url: ${{ steps.tf_outputs.outputs.artifact_registry_repository_url }}
-      cloudsql_connection_name: ${{ steps.tf_outputs.outputs.cloud_sql_connection_name }}
-      cloudsql_socket_host: ${{ steps.tf_outputs.outputs.cloud_sql_socket_host }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,22 +42,6 @@ jobs:
           TF_VAR_deletion_protection: "true"
         run: terraform apply -auto-approve
 
-      - name: Read Terraform Outputs
-        id: tf_outputs
-        working-directory: infra/terraform
-        run: |
-          set -euo pipefail
-          echo "=== All outputs ==="
-          terraform output
-          echo "=== Setting outputs ==="
-          AR_URL=$(terraform output -raw artifact_registry_repository_url)
-          SQL_CONN=$(terraform output -raw cloud_sql_connection_name)
-          SQL_HOST=$(terraform output -raw cloud_sql_socket_host)
-          echo "artifact_registry_repository_url=${AR_URL}" >> "$GITHUB_OUTPUT"
-          echo "cloud_sql_connection_name=${SQL_CONN}" >> "$GITHUB_OUTPUT"
-          echo "cloud_sql_socket_host=${SQL_HOST}" >> "$GITHUB_OUTPUT"
-          echo "=== Done: AR_URL=${AR_URL} ==="
-
   # Build & push Docker images to Artifact Registry
   build_and_push:
     name: Build & Push Images
@@ -91,7 +70,8 @@ jobs:
       - name: Build & push Backend image
         id: be
         run: |
-          IMAGE="${{ needs.terraform_apply.outputs.artifact_registry_url }}/cloudhw-be:${{ github.sha }}"
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}"
+          IMAGE="${REGISTRY}/cloudhw-be:${{ github.sha }}"
           docker build -t "$IMAGE" cloudhw-BE
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
@@ -99,7 +79,8 @@ jobs:
       - name: Build & push Frontend image
         id: fe
         run: |
-          IMAGE="${{ needs.terraform_apply.outputs.artifact_registry_url }}/cloudhw-fe:${{ github.sha }}"
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}"
+          IMAGE="${REGISTRY}/cloudhw-fe:${{ github.sha }}"
           docker build -t "$IMAGE" cloudhw-FE
           docker push "$IMAGE"
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
@@ -128,7 +109,7 @@ jobs:
       # ── Backend ────────────
       - name: Render BE app.yaml
         env:
-          POSTGRES_HOST:     ${{ needs.terraform_apply.outputs.cloudsql_socket_host }}
+          POSTGRES_HOST:     "/cloudsql/${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION }}:${{ secrets.GCP_CLOUDSQL_INSTANCE_NAME }}"
           POSTGRES_USER:     ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB:       ${{ secrets.POSTGRES_DB }}
@@ -140,7 +121,7 @@ jobs:
           ADMIN_NAME:                 ${{ secrets.ADMIN_NAME }}
           FRONTEND_URL:               ${{ secrets.FRONTEND_URL }}
           ASPNETCORE_AllowedHosts:    ${{ secrets.ASPNETCORE_AllowedHosts }}
-          GCP_CLOUDSQL_CONNECTION_NAME: ${{ needs.terraform_apply.outputs.cloudsql_connection_name }}
+          GCP_CLOUDSQL_CONNECTION_NAME: "${{ secrets.GCP_PROJECT_ID }}:${{ secrets.GCP_REGION }}:${{ secrets.GCP_CLOUDSQL_INSTANCE_NAME }}"
           SMTP_HOST:     ${{ secrets.SMTP_HOST }}
           SMTP_PORT:     ${{ secrets.SMTP_PORT }}
           SMTP_USER:     ${{ secrets.SMTP_USER }}
