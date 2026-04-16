@@ -51,9 +51,17 @@ jobs:
         id: tf_outputs
         working-directory: infra/terraform
         run: |
-          echo "artifact_registry_repository_url=$(terraform output -raw artifact_registry_repository_url)" >> "$GITHUB_OUTPUT"
-          echo "cloud_sql_connection_name=$(terraform output -raw cloud_sql_connection_name)" >> "$GITHUB_OUTPUT"
-          echo "cloud_sql_socket_host=$(terraform output -raw cloud_sql_socket_host)" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          echo "=== All outputs ==="
+          terraform output
+          echo "=== Setting outputs ==="
+          AR_URL=$(terraform output -raw artifact_registry_repository_url)
+          SQL_CONN=$(terraform output -raw cloud_sql_connection_name)
+          SQL_HOST=$(terraform output -raw cloud_sql_socket_host)
+          echo "artifact_registry_repository_url=${AR_URL}" >> "$GITHUB_OUTPUT"
+          echo "cloud_sql_connection_name=${SQL_CONN}" >> "$GITHUB_OUTPUT"
+          echo "cloud_sql_socket_host=${SQL_HOST}" >> "$GITHUB_OUTPUT"
+          echo "=== Done: AR_URL=${AR_URL} ==="
 
   # Build & push Docker images to Artifact Registry
   build_and_push:
