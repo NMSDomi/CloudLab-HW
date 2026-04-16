@@ -48,10 +48,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform_apply
 
-    outputs:
-      be_image: ${{ steps.be.outputs.image }}
-      fe_image: ${{ steps.fe.outputs.image }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -131,8 +127,9 @@ jobs:
 
       - name: Deploy BE to App Engine
         run: |
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}"
           gcloud app deploy cloudhw-BE/app.rendered.yaml \
-            --image-url=${{ needs.build_and_push.outputs.be_image }} \
+            --image-url="${REGISTRY}/cloudhw-be:${{ github.sha }}" \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
 
@@ -144,7 +141,8 @@ jobs:
 
       - name: Deploy FE to App Engine
         run: |
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REGISTRY_REPOSITORY }}"
           gcloud app deploy cloudhw-FE/app.rendered.yaml \
-            --image-url=${{ needs.build_and_push.outputs.fe_image }} \
+            --image-url="${REGISTRY}/cloudhw-fe:${{ github.sha }}" \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --quiet
